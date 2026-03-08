@@ -9,6 +9,7 @@ export default class MusicPlayer extends Narve.Component<HTMLAudioElement>{
         this.elem.src = src
     }
     play(){
+        this.elem.currentTime = 0
         this.elem.play()
     }
     pause(){

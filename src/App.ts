@@ -353,6 +353,7 @@ export default class App extends Narve.Component {
         }
         this.musicPlayer.play()
         await this.player.play(1,this.cpm,sceneFrames)
+        this.musicPlayer.pause()
         this.playing = false
         await message("アニメーション終了")
         this.edit.drawFirstFrame()

@@ -1,0 +1,23 @@
+.macroEditWindow{
+    width: 100%;
+    & > p {
+        max-width: 80%;
+        width: fit-content;
+        font-family: monospace;
+        /* そのままだとフォントが細くて見づらいので横に少し伸ばす */
+        transform: scale(1.2,1);
+        transform-origin: left;
+        box-sizing: border-box;
+        overflow-x: scroll;
+        &::-webkit-scrollbar{
+            width: 0px;
+        }
+    }
+    & .macroColorDiv {
+        margin: 0.5em;
+        /* display: inline-block; */
+        width: 1em;
+        height: 1em;
+        border-radius: 50%;
+    }
+}

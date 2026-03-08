@@ -1,0 +1,66 @@
+.pamphlet{
+    display: none;
+    background-color: #fff;
+    color: #000;
+    width: 100vw;
+
+    & > div {
+        width: 100%;
+        & > div {
+            display: flex;
+            flex-wrap: wrap;
+            /* & .count {
+
+            }
+            & > .pamph_break > span {
+                border: 1px solid #000;
+            }
+            & > .pamph_slide{
+                border-radius: 50%;
+                border: 1px solid #000;
+            }
+            & > div{
+                margin: 1em;
+                display: flex;
+                flex-direction: column;
+                & > span{
+                    min-width: 2rem;
+                    width: fit-content;
+                    height: fit-content;
+                    text-align: center;
+                }
+                & > .spinSymbol {
+                    font-size: 2em;
+                }
+                & > .under{
+                    font-size: 0.5em;
+                }
+            } */
+            & > .pamphMacroArea{
+                display: flex;
+                flex-direction: row;
+                padding: 0px 10%;
+                & canvas{
+                    width: 4em;
+                }
+            }
+            & > .gridCanvas{
+                width: 90%;
+                margin: 0px 5%;
+            }
+            & .page-break{
+                width: 100%;
+                height: 0px;
+                break-after: page;
+            }
+        }
+    }
+}
+@media print {
+    .app{
+        display: none;
+    }
+    .pamphlet{
+        display: block;
+    }
+}

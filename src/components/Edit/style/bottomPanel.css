@@ -1,0 +1,4 @@
+.bottomPanel {
+    display: grid;
+    grid-area: bottomPanel;
+}

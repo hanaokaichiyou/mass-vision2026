@@ -1,0 +1,16 @@
+.varsSettingsTable {
+    & > tr{
+        & > td,th{
+            text-align: center;
+            & > input{
+                text-align: center;
+                width: 2em;
+                padding: 0.5em 0.2em;
+                border-radius: 2px;
+                &::-webkit-inner-spin-button{
+                    display: none;
+                }
+            }
+        }
+    }
+}

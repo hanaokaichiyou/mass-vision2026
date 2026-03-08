@@ -1,0 +1,15 @@
+.pamphSettings{
+    & > p > div{
+        display: inline-block;
+        vertical-align: top;
+        margin: 0px 0.5em;
+    }
+    & .pamphDispCheckBox{
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        vertical-align: baseline;
+        border-radius: 1em;
+        border: 2px solid #888;
+    }
+}

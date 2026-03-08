@@ -1,0 +1,13 @@
+.macroInput {
+    padding: 1rem 1rem;
+    text-align: center;
+    & > input {
+        min-width: 66%;
+        /* width: fit-content; */
+        font-family: monospace;
+        /* そのままだとフォントが細くて見づらいので横に少し伸ばす */
+        transform: scale(1.2,1);
+        transform-origin: center;
+        box-sizing: border-box;
+    }
+}

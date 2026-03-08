@@ -1,0 +1,22 @@
+.scenePage{
+    & > .scenesElem {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    & > header{
+        cursor: default;
+        &:hover{
+            color: rgb(96, 210, 255);
+        }
+    }
+}
+.sceneUnit {
+    &.moving{
+        & > canvas {
+            opacity: 0.5;
+        }
+    }
+    &.hovering{
+        border: light-dark(#888,#fff) 3px solid;
+    }
+}

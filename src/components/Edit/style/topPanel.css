@@ -1,0 +1,9 @@
+.topPanel{
+    grid-area: topPanel;
+    text-align: center;
+    & > .sceneStateDisp{
+        & > span{
+            margin: 1em;
+        }
+    }
+}

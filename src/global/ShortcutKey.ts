@@ -25,7 +25,6 @@ export default async function registerShortcutKey(app: App){
     await register("Ctrl+K", (e) => u(e,()=>app.play()))
     await register("Ctrl+M", (e) => u(e,()=>app.manualPlay()))
     await register("Ctrl+H", (e) => u(e,()=>app.play(app.currentSceneIdx)))
-    await register("Ctrl+U", (e) => u(e,()=>menuFunctions.setBPM(app)))
     await register("Esc", (e) => u(e,()=>{app.player.pause();app.manualPlayer.pause()}))
     // await register("", () => )
 } 

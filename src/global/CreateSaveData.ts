@@ -6,7 +6,7 @@ import Slide, { Link } from "./Slide"
 import Point from "./Point"
 import { massCanvasDef as ms} from "./massCanvasDef"
 
-export function scenesToSaveData(scenes: Scene[],colorFill: boolean[]): saveData_t {
+export function scenesToSaveData(scenes: Scene[],colorFill: boolean[],defaultCPM: number): saveData_t {
   
   return {
     scenes: scenes.map(scene => {
@@ -48,12 +48,14 @@ export function scenesToSaveData(scenes: Scene[],colorFill: boolean[]): saveData
             colorIndex: person.colorIndex,
             variables: person.variables
           }
-        })
+        }),
+        slowSegments: [...scene.slowSegments.values()]
       }
     }),
     pamphSettings: {
       colorFills: colorFill
-    }
+    },
+    defaultCPM: defaultCPM
   }
 }
 export function saveDataToScenes(saveData: saveData_t): Scene[] {
@@ -71,10 +73,13 @@ export function saveDataToScenes(saveData: saveData_t): Scene[] {
       }
       return person
     })
+
     const scene = new Scene()
+    
     scene.macros = svScene.macros.map(svMacro => {
       return new Macro(svMacro.macroStr)
     })
+    
     scene.slides = svScene.slides.map(svSlide => {
       const links = svSlide.links.map(svLink => {
         const point = new Point(svLink.absPos.x,svLink.absPos.y)
@@ -86,8 +91,13 @@ export function saveDataToScenes(saveData: saveData_t): Scene[] {
       slide.links = links
       return slide
     })
+    
     scene.persons = persons
-    console.log("trans slides",scene.slides)
+
+    scene.slowSegments = new Map(svScene.slowSegments?.map(slowSeg => {
+      return [crypto.randomUUID(),slowSeg]
+    }))
+
     return scene
   })
 }

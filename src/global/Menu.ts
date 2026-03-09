@@ -219,7 +219,6 @@ export default async function createMenu(app: App){
             {
                 id: "cpm",
                 text: "BPM",
-                accelerator: "Ctrl+U",
                 action: () => menuFunctions.setBPM(app)
             },
             personSelectSettings,
@@ -236,6 +235,7 @@ export namespace menuFunctions {
             const scenes = saveDataToScenes(saveData)
             app.setScenes(scenes)
             app.edit.rightPanel.pamphSettings.checkeds = saveData.pamphSettings?.colorFills||[]
+            app.setDefaultCpm(saveData.defaultCPM || 180)
         })
     }
     export const openMusic = async (app: App) => {
@@ -263,7 +263,7 @@ export namespace menuFunctions {
             return true
         })
         if(ok){
-            openDlg_write_msvi(scenesToSaveData(app.scenes,app.edit.rightPanel.pamphSettings.checkeds))
+            openDlg_write_msvi(scenesToSaveData(app.scenes,app.edit.rightPanel.pamphSettings.checkeds,app.defaultCpm))
         }
     }
     export const print = (app: App) => {
@@ -313,9 +313,10 @@ export namespace menuFunctions {
         app.removeScene()
     }
     // playMenuに関しては処理が単純すぎるのでショートカット側で直接書く
+    
     export const setBPM = (app: App) => {
-        const cpm = Number(prompt("BPMを入力",app.cpm.toString()))
+        const cpm = Number(prompt("BPMを入力",app.defaultCpm.toString()))
         if(Number.isNaN(cpm)) return
-        app.setCpm(cpm)
+        app.setDefaultCpm(cpm)
     }
 }

@@ -3,11 +3,13 @@ import PamphSettings from "../components/Edit/rightPanel/pamphSettings"
 export type saveData_t = {
     scenes: saveDataScene_t[]
     pamphSettings?: saveDataPamphSettings_t
+    defaultCPM?: number
 }
 export type saveDataScene_t = {
     macros: saveDataMacro_t[]
     slides: saveDataSlide_t[]
     persons: saveDataPerson_t[]
+    slowSegments?: saveDataSlowSegments_t[]
 }
 export type saveDataMacro_t = {
     macroStr: string
@@ -29,6 +31,10 @@ export type saveDataPerson_t = {
     inDisplay: boolean
     colorIndex: number
     variables?: saveVars
+}
+export type saveDataSlowSegments_t = {
+    seg: [number,number],
+    cpm: number
 }
 export type saveVars = {
     g?: number
@@ -55,11 +61,12 @@ export type saveDataPamphSettings_t = {
 export function isSaveData(value: any): value is saveData_t {
   if(typeof value === "object")
   if(value !== null)
-  if(Object.keys(value).length <= 2)
+  if(Object.keys(value).length <= 3)
   if("scenes" in value)
   if(Array.isArray(value.scenes))
   if(value.scenes.every(isSaveDataScene))
   if(value.pamphSettings === undefined || isPamphSettings(value.pamphSettings))
+  if(value.defaultCPM === undefined || typeof value.defaultCPM === "number")
     return true
   return false
 }
@@ -68,7 +75,7 @@ export function isSaveDataScene(value: any): value is saveDataScene_t {
     if (typeof value !== "object" || value === null) {
         return false;
     }
-
+    if(Object.keys(value).length > 4) return false
     // macrosのチェック
     if (!Array.isArray(value.macros) || !value.macros.every(isSaveDataMacro)) {
         return false;
@@ -83,6 +90,10 @@ export function isSaveDataScene(value: any): value is saveDataScene_t {
     if (!Array.isArray(value.persons) || !value.persons.every(isSaveDataPerson)) {
         return false;
     }
+
+    // slowSegmentsのチェック
+    if(value.slowSegments !== undefined && ( !Array.isArray(value.slowSegments) || !value.slowSegments.every(isSaveDataSlowSegments) ))
+        return false
 
     return true;
 }
@@ -153,4 +164,18 @@ function isSaveDataPoint(value: any): value is saveDataPoint_t {
 }
 function isPamphSettings(data: any): data is PamphSettings {
     return Array.isArray(data.colorFills) && (data.colorFills as []).every(item => typeof item === 'boolean');
+}
+function isSaveDataSlowSegments(value: any): value is saveDataSlowSegments_t {
+    return true
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        Object.keys(value).length === 2 &&
+        "seg" in value &&
+        "cpm" in value &&
+        Array.isArray(value.seg) &&
+        value.seg.length === 2 &&
+        value.seg.every((v:any) => typeof v === "number") &&
+        typeof value.cpm === "number"
+    )
 }

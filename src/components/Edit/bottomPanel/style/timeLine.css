@@ -1,0 +1,17 @@
+.timeLine{
+    display: block;
+    flex-direction: column;
+    padding: 1rem;
+    width: fit-content;
+    height: 100%;
+    box-sizing: border-box;
+    /* cursor: ew-resize; */
+    & > canvas{
+        &.massBar{
+            height: 40%;
+        }
+        &.slowBar{
+            height: 30%;
+        }
+    }
+}

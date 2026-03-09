@@ -18,7 +18,7 @@ export default class App extends Narve.Component {
     scenes: Scene[] = []
     edit: Edit
     scenePage = new ScenePage(this.scenes)
-    cpm: number = 180
+    defaultCpm: number = 180
     undo = new Undo()
 
     currentSceneIdx = 0
@@ -34,7 +34,7 @@ export default class App extends Narve.Component {
         super("div",{class: "app"})
         this.children.set(this.pages,this.musicPlayer)
 
-        this.edit = new Edit(this.scenes[0],0)// 形式的に
+        this.edit = new Edit(new Scene(),0)// 形式的に
         this.setScenes([])// こっちが本命
 
         this.pages.children.set(this.edit,this.scenePage)
@@ -64,7 +64,8 @@ export default class App extends Narve.Component {
     setScenes(scenes: Scene[]){
         this.scenes = scenes
         if(scenes.length === 0) this.scenes.push(new Scene())
-        this.setScene(scenes[0])
+            console.log(this.scenes)
+        this.setScene(this.scenes[0])
 
         this.undo = new Undo()
         this.edit.pushUndo = 
@@ -73,7 +74,7 @@ export default class App extends Narve.Component {
             this.undo.push(...func)
         }
         this.edit.editField.fixLayerCenter()
-        this.scenePage.setScenes(scenes)
+        this.scenePage.setScenes(this.scenes)
         createMenu(this)
         this.onScenesChanged()
     }
@@ -161,8 +162,9 @@ export default class App extends Narve.Component {
         this.scenePage.reload()
         this.edit.rightPanel.idWindow.reloadScenesOption(this.scenes)
     }
-    setCpm(cpm: number){
-        this.cpm = cpm
+    setDefaultCpm(cpm: number){
+        this.defaultCpm = cpm
+        this.edit.bottomPanel.timeLine.slowBar.defaultCPM = cpm
     }
     resetId(targetSceneIndex: number){
         const doFunc = (): [number,number][][]|undefined => {
@@ -279,6 +281,7 @@ export default class App extends Narve.Component {
             if(sceneNum < 0 || sceneNum >= this.scenes.length){
                 // 普通にアプリを操作していたらあり得ないはず
                 await message("現在のシーンが見つかりませんでした。")
+                return 
             }
             if(!PlayConditions.macroOk(this.scenes[sceneNum])){
                 await message("マクロが設定されてない人がいます。\nマクロが設定されていない人は表示されません。")
@@ -342,8 +345,13 @@ export default class App extends Narve.Component {
             this.playing = false
             return
         }
+        const slowSegmentss = sceneNum === undefined?
+            this.scenes.map(scene => scene.slowSegments) :
+            [this.scenes[sceneNum].slowSegments]
+
         this.edit.rightPanel.hide()
         this.edit.leftPanel.hide()
+        this.edit.bottomPanel.hide()
         this.edit.editField.uiCanvas.cancel()
         this.edit.editField.uiCanvas.clearAll()
         
@@ -352,7 +360,7 @@ export default class App extends Narve.Component {
             this.edit.topPanel.sceneStateDisp.setCountNum(countState.count)
         }
         this.musicPlayer.play()
-        await this.player.play(1,this.cpm,sceneFrames)
+        await this.player.play(1,this.defaultCpm,sceneFrames,sceneNum||0,slowSegmentss)
         this.musicPlayer.pause()
         this.playing = false
         await message("アニメーション終了")
@@ -361,6 +369,7 @@ export default class App extends Narve.Component {
         this.edit.topPanel.sceneStateDisp.setCountNum(0)
         this.edit.rightPanel.display()
         this.edit.leftPanel.display()
+        this.edit.bottomPanel.display()
     }
     async manualPlay(scene?: number){
         if(this.playing){

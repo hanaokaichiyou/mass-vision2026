@@ -5,7 +5,7 @@
     grid-template: 
     "topPanel topPanel topPanel"5%
     "leftPanel editField rightPanel"80%
-    "bottomPanel bottomPanel bottomPanel" auto/
+    "bottomPanel bottomPanel bottomPanel" 15%/
     20% 60% 20%
     ;
     & > .editField{

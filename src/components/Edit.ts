@@ -111,6 +111,7 @@ export default class Edit extends Narve.Component {
         this.rightPanel.setScene(scene)
         this.topPanel.setScene(sceneIndex)
         this.leftPanel.clear()
+        this.bottomPanel.setScene(scene)
         this.drawFirstFrame()
         this.editField.uiCanvas.clearAll()
         this.onSceneChanged(scene,sceneIndex)

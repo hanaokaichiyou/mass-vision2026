@@ -42,8 +42,8 @@ export default class LeftPanel extends Narve.Component {
         nr("option",{value: massCanvasDef.quarity*2},"2")
     )
     rangeSelect = nr<HTMLSelectElement>("select",{},
-        nr("option",{value: "rect"},"矩形選択"),
-        nr("option",{value: "para"},"平行四辺形選択"),
+        nr("option",{value: "rect"},"▢(Ctrl+Space)"),
+        nr("option",{value: "para"},"▰(Ctrl+Space)"),
     )
     alignSelect = nr<HTMLSelectElement>("select",{},
         nr("option",{value: massCanvasDef.quarity/1},"1マス上"),
@@ -109,6 +109,12 @@ export default class LeftPanel extends Narve.Component {
     }
     setModeDispStr(str: string){
         this.modeDisp.setInnerText(str)
+    }
+
+    toggleRangeSelect(){
+        // HACK 0か1しかとらないので、x = 1-xで入れ替わる
+        this.rangeSelect.elem.selectedIndex = 1-this.rangeSelect.elem.selectedIndex
+        this.rangeSelect.elem.dispatchEvent(new Event("change"))
     }
 
     order(str: string){

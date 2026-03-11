@@ -1,10 +1,11 @@
 import { Narve, nr } from "narve";
 import Scene from "../../../global/Scene";
+import { setNumKeyOperations } from "../../../global/ShortcutKey";
 
 export default class IdWindow extends Narve.Component {
     idDisp = nr("p")
-    resetIdBtn = nr("button",{},"番号振り直し")
-    checkIdBtn = nr("button",{},"番号確認")
+    checkIdBtn = nr("button",{},"1．番号確認")
+    resetIdBtn = nr("button",{},"2．番号振り直し")
     targetSceneSelect = nr<HTMLSelectElement>("select",{})
     currentSceneIndex: number|undefined
     constructor(){
@@ -40,5 +41,16 @@ export default class IdWindow extends Narve.Component {
         if(Number.isNaN(start)) return null
         if(start < 0) return null
         return start
+    }
+    display(display?: string): void {
+        super.display(display)
+        this.onDisplay()
+    }
+    onDisplay(){
+        setNumKeyOperations([
+            undefined,
+            this.checkIdBtn,
+            this.resetIdBtn
+        ].map(nar => nar?() => nar.elem.focus() : undefined))
     }
 }

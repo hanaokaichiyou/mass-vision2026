@@ -85,4 +85,10 @@ export default class SlideEditWindow extends Narve.Component {
         slide
         // define in project://src/components/Edit.ts
     }
+    display(display?: string): void {
+        super.display(display)
+        this.onDisplay()
+    }
+    onDisplay(){
+    }
 }

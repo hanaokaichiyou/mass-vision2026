@@ -24,6 +24,7 @@ export type saveDataLink_t = {
 export type saveDataPerson_t = {
     id: number
     macroIndex: number|undefined
+    reverseFlag?: boolean
     startState: {
         pos: saveDataPoint_t
         rotateAngle: number
@@ -121,6 +122,7 @@ function isSaveDataPerson(value: any): value is saveDataPerson_t {
         value !== null &&
         typeof value.id === "number" &&
         (typeof value.macroIndex === "number" || value.macroIndex === undefined) &&
+        (value.reverseFlag === undefined || typeof value.reverseFlag === "boolean") &&
         typeof value.inDisplay === "boolean" &&
         typeof value.colorIndex === "number" &&
         typeof value.startState === "object" &&

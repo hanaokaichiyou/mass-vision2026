@@ -9,6 +9,13 @@
         box-shadow: none;
         font-size: 2rem;
         padding: 0px;
+        border: none;
+        &:hover{
+            color: #396cd8;
+        }
+        &:focus{
+            color: #00a2ff;
+        }
     }
     & > .windows{
         border-top: 1px #888 solid;
@@ -17,8 +24,12 @@
         width: 100%;
         & button{
             margin: 0.3rem;
+            border-width: 2px;
+            &:focus{
+                border-color: #00a2ff;
+            }
         }
-        & > div{
+        &  div{
             height: 100%;
             width: 100%;
         }

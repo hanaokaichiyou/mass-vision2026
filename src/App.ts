@@ -30,6 +30,8 @@ export default class App extends Narve.Component {
     pamphElem: Narve.Component
 
     pages = nr("div",{class: "pages"})
+
+    segPlus1 = true
     constructor(){
         super("div",{class: "app"})
         this.children.set(this.pages,this.musicPlayer)
@@ -360,7 +362,7 @@ export default class App extends Narve.Component {
             this.edit.topPanel.sceneStateDisp.setCountNum(countState.count)
         }
         this.musicPlayer.play()
-        await this.player.play(1,this.defaultCpm,sceneFrames,sceneNum||0,slowSegmentss)
+        await this.player.play(1,this.defaultCpm,sceneFrames,sceneNum||0,slowSegmentss,this.segPlus1)
         this.musicPlayer.pause()
         this.playing = false
         await message("アニメーション終了")

@@ -17,4 +17,11 @@ export default class SetColorIndexWindow extends Narve.Component {
     getColorIndex(){
         return this.colorIndexSelect.elem.selectedIndex
     }
+    display(display?: string): void {
+        super.display(display)
+        this.onDisplay()
+    }
+    onDisplay(){
+
+    }
 }

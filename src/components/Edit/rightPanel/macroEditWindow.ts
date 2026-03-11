@@ -4,24 +4,30 @@ import "./style/macroEditWindow.css"
 import Macro from "../../../global/Macro";
 import { UndoFunc } from "../../../global/Undo";
 import { massCanvasDef } from "../../../global/massCanvasDef";
+import { setNumKeyOperations } from "../../../global/ShortcutKey";
 
 export default class MacroEditWindow extends Narve.Component {
     macroIndexSelect = nr<HTMLSelectElement>("select")
     macroColorDiv = nr("div",{class: "macroColorDiv"})
-    editBtn = nr("button",{},"編集")
-    applyMacroBtn = nr("button",{},"マクロを適用")
+    editBtn = nr("button",{},"1．編集")
+    applyMacroBtn = nr("button",{},"2．マクロを適用")
+    applyReverseMacroBtn = nr("button",{},"3．ダッシュマクロを適用")
     macroDisp = nr("p")
-    addMacroBtn = nr("button",{},"+　マクロを追加")
+    addMacroBtn = nr("button",{},"4．+　マクロを追加")
     scene: Scene|undefined
     constructor(){
         super("div",{class: "macroEditWindow"})
         this.children.set(
             this.macroIndexSelect,
             this.macroColorDiv,
-            this.macroDisp,this.editBtn,this.applyMacroBtn,
+            this.macroDisp,
+            this.editBtn,
+            this.applyMacroBtn,
+            this.applyReverseMacroBtn,
             this.addMacroBtn
         )
         this.applyMacroBtn.hide()
+        this.applyReverseMacroBtn.hide()
         this.macroDisp.hide()
         this.editBtn.hide()
 
@@ -43,6 +49,7 @@ export default class MacroEditWindow extends Narve.Component {
             )
         )        
         this.applyMacroBtn.hide()
+        this.applyReverseMacroBtn.hide()
         this.macroDisp.hide()
         this.editBtn.hide()
         this.macroColorDiv.hide()
@@ -56,6 +63,7 @@ export default class MacroEditWindow extends Narve.Component {
         this.macroDisp.display()
         this.editBtn.display()
         this.applyMacroBtn.display()
+        this.applyReverseMacroBtn.display()
 
         this.macroColorDiv.elem.style.backgroundColor = ""
             this.macroColorDiv.elem.style.borderWidth = "0px"
@@ -75,6 +83,7 @@ export default class MacroEditWindow extends Narve.Component {
         this.macroDisp.hide()
         this.editBtn.hide()
         this.applyMacroBtn.hide()
+        this.applyReverseMacroBtn.hide()
 
         const beforeStr = this.scene.macros[index].macroStr
         const newStr 
@@ -131,5 +140,18 @@ export default class MacroEditWindow extends Narve.Component {
     }
     pushUndo(...func: UndoFunc[]){
         func// define in project://src/App.ts
+    }
+    display(display?: string): void {
+        super.display(display)
+        this.onDisplay()
+    }
+    onDisplay(){
+        setNumKeyOperations([
+            undefined,
+            this.editBtn,
+            this.applyMacroBtn,
+            this.applyReverseMacroBtn,
+            this.addMacroBtn,
+        ].map(nar => nar?() => nar.elem.focus() : undefined))
     }
 }

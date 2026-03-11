@@ -4,6 +4,7 @@ import PersonState from "./PersonState"
 
 export default class Person {
     macroIndex: number|undefined = undefined
+    reverseFlag = false
     startState: PersonState
 
     state = new PersonState(new Point(0,0),ms.defRotateAngle)

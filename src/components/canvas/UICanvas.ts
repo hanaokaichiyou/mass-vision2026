@@ -273,43 +273,45 @@ export default class UICanvas extends MassCanvas {
     drawDestGoast(pos: Point){
         this.drawSlideDestMark(pos)
     }
-    drawMacroMarker(pos: Point,macroIndex: number|undefined){
+    drawMacroMarker(pos: Point,macroIndex: number|undefined,reverseFlag: boolean){
         if(this.ctx === null) return
+        // 普通に白色で人を書く
         const r = ms.personMarkerR
         this.ctx.beginPath()
         this.ctx.fillStyle = ms.macroMarkDefColor
         this.ctx.arc(...pos.getPair(),r,0,2*Math.PI)
         this.ctx.fill()
         if(macroIndex === undefined) return
+        
+        let bigIndex = false
         if(macroIndex >= ms.macroMarkColors.length){
+            bigIndex = true
             macroIndex -= ms.macroMarkColors.length
-            if(ms.macroMarkColors[macroIndex] === undefined) return
-            const r = ms.personMarkerR
-            this.ctx.beginPath()
             this.ctx.fillStyle = ms.macroMarkColors[macroIndex]
-            this.ctx.arc(...pos.getPair(),r,0,2*Math.PI)
-            this.ctx.fill()
         }else{
-            if(ms.macroMarkColors[macroIndex] === undefined) return
-            const r = ms.personMarkerR
-            this.ctx.beginPath()
             this.ctx.strokeStyle = ms.macroMarkColors[macroIndex]
             this.ctx.lineWidth = 2
-            this.ctx.arc(...pos.getPair(),r,0,2*Math.PI)
-            this.ctx.stroke()
         }
+
+        if(ms.macroMarkColors[macroIndex] === undefined) return
+        this.ctx.beginPath()
+        if(reverseFlag) this.ctx.rect(...pos.sub([r,r]).getPair(),r*2,r*2)
+        else this.ctx.arc(...pos.getPair(),r,0,2*Math.PI)
+
+        if(bigIndex) this.ctx.fill()
+        else this.ctx.stroke()
     }
     drawPersonsMacroMarkers(persons: Person[]){
         this.clearAll()
         persons.forEach(person => {
-            this.drawMacroMarker(person.state.pos,person.macroIndex)
+            this.drawMacroMarker(person.state.pos,person.macroIndex,person.reverseFlag)
         })
     }
     // 結局番号の話だからまくろとおなじでOK 
     drawPersonsVarMarkers(persons: Person[], varName: ms.VariableName){
         this.clearAll()
         persons.forEach(person => {
-            this.drawMacroMarker(person.state.pos,person.variables[varName])
+            this.drawMacroMarker(person.state.pos,person.variables[varName],person.reverseFlag)
         })
     }
     drawSelect(pos: Point){

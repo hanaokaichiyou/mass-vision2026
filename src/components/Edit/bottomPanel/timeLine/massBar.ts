@@ -38,6 +38,11 @@ export default class MassBar extends Narve.Component<HTMLCanvasElement> {
             let y = timeLineDef.normalLineLen
             if(i % timeLineDef.longLineGapCount === 0){
                 y = timeLineDef.longLineLen
+                this.ctx.textAlign = "right"
+                this.ctx.textBaseline = "bottom"
+                this.ctx.fillStyle ="#fff"
+                this.ctx.font = "sans-serif 16px"
+                this.ctx.fillText(`${i}`,x,timeLineDef.massBarHeightPx)
             }else if(i % timeLineDef.midiumLineGapCount === 0){
                 y = timeLineDef.midiumLineLen
             }

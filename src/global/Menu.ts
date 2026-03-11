@@ -176,23 +176,54 @@ export default async function createMenu(app: App){
     const lockAndRelease = await MenuItem.new({
         id: "lock-release",
         text: app.edit.editField.fixed?"解除":"固定",
+        accelerator: app.edit.editField.fixed?"Ctrl+R":"Ctrl+L",
         action: () => {
             if(app.edit.editField.fixed){
                 app.edit.editField.unFixLayer()
                 lockAndRelease.setText("固定")
+                lockAndRelease.setAccelerator("Ctrl+F")
             }else{
                 app.edit.editField.fixLayer()
                 lockAndRelease.setText("解除")
+                lockAndRelease.setAccelerator("Ctrl+D")
             }
         }
     })
     const centering = await MenuItem.new({
         id: "centering",
         text: "中心固定",
+        accelerator: "Ctrl+B",
         action: () => {
             app.edit.editField.fixLayerCenter()
         }
     })
+
+    const justSeg = await CheckMenuItem.new({
+        id: "justSeg",
+        text: "区間のみスロー",
+        checked: !app.segPlus1,
+        action: () => {
+            app.segPlus1 = false
+            justSeg.setChecked(true)
+            segPlus1.setChecked(false)
+        }
+    })
+    const segPlus1 = await CheckMenuItem.new({
+        id: "segPlus1",
+        text: "区間プラス1スロー",
+        checked: app.segPlus1,
+        action: () => {
+            app.segPlus1 = true
+            justSeg.setChecked(false)
+            segPlus1.setChecked(true)
+        }
+    })
+    const slowSettings = await Submenu.new({
+        text: "スロー設定",
+        items: [justSeg,segPlus1]
+    })
+
+
     const scrollAllow = await Submenu.new({
         text: "画面固定",
         items: [lockAndRelease,centering]
@@ -223,6 +254,7 @@ export default async function createMenu(app: App){
             },
             personSelectSettings,
             scrollAllow,
+            slowSettings
         ]
     })
     menu.setAsAppMenu()

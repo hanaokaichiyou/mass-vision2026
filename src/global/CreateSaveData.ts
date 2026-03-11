@@ -37,6 +37,7 @@ export function scenesToSaveData(scenes: Scene[],colorFill: boolean[],defaultCPM
           return {
             id: person.id,
             macroIndex: person.macroIndex,
+            reverseFlag: person.reverseFlag,
             startState: {
               pos: {
                 x: person.startState.pos.x,
@@ -65,6 +66,11 @@ export function saveDataToScenes(saveData: saveData_t): Scene[] {
       const person = new Person(new Point(pos.x,pos.y),svPerson.id)
       person.startState.rotateAngle = svPerson.startState.rotateAngle
       person.macroIndex = svPerson.macroIndex
+      if(svPerson.reverseFlag !== undefined){
+        person.reverseFlag = svPerson.reverseFlag
+      }else{
+        person.reverseFlag = false
+      }
       person.colorIndex = svPerson.colorIndex
       person.inDisplay = svPerson.inDisplay
       person.variables = {

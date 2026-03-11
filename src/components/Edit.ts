@@ -67,7 +67,8 @@ export default class Edit extends Narve.Component {
         this.rightPanel.rootMenu.rotateAngleBtn.elem.onclick = async ()=>{while(await this.startSetRotateAngle());}
         this.rightPanel.rootMenu.specialRotateAngleBtn.elem.onclick = async ()=>{while(await this.startSetSpecialRotateAngle());}
         
-        this.rightPanel.macroEditWindow.applyMacroBtn.elem.onclick = async ()=>{while(await this.startApplyMacro());}
+        this.rightPanel.macroEditWindow.applyMacroBtn.elem.onclick = async ()=>{while(await this.startApplyMacro(false));}
+        this.rightPanel.macroEditWindow.applyReverseMacroBtn.elem.onclick = async ()=>{while(await this.startApplyMacro(true));}
  
         this.rightPanel.slideEditWindow.drawSlide = slide => {
             this.editField.uiCanvas.clearAll()
@@ -561,30 +562,33 @@ export default class Edit extends Narve.Component {
         })
         return true
     }
-    async startApplyMacro(){
+    async startApplyMacro(reverseFlag: boolean){
         this.editField.uiCanvas.cancel()
         this.leftPanel.clear()
         this.leftPanel.setModeDispStr("マクロ適用")
-        const persons = await this.startSelectRangePersons("マクロを適用する範囲を指定してください")
+        const persons = await this.startSelectRangePersons(`${reverseFlag?"ダッシュ":""}マクロを適用する範囲を指定してください`)
         this.editField.uiCanvas.clearAll()
         this.leftPanel.clear()
         if(persons.length === 0) return true
         const newMacroIndex = this.rightPanel.macroEditWindow.getFocusingMacroIndex()
-        const person_macroIndexPair: [Person,number|undefined][] = persons.map(person => [person,person.macroIndex])
+        const person_macroIndex_reverseFlagPair: [Person,number|undefined,boolean][] = persons.map(person => [person,person.macroIndex,person.reverseFlag])
         persons.forEach(person => {
             person.macroIndex = newMacroIndex
+            person.reverseFlag = reverseFlag
         })
         this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
         this.pushUndo({
             do: () => {
-                person_macroIndexPair.forEach(([person,_]) => {
+                persons.forEach(person => {
                     person.macroIndex = newMacroIndex
+                    person.reverseFlag = reverseFlag
                 })
                 this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
             },
             undo: () => {
-                person_macroIndexPair.forEach(([person,macroIndex]) => {
+                person_macroIndex_reverseFlagPair.forEach(([person,macroIndex]) => {
                     person.macroIndex = macroIndex
+                    person.reverseFlag = reverseFlag
                 })
                 this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
             }

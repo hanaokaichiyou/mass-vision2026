@@ -13,7 +13,7 @@ export default class Player {
         this.personsCanvas = personsCanvas
     }
 
-    play(fpc: number,defaultCpm: number,sceneFramess: sceneFrames[],startSceneNum: number,slowSegmentss: SlowSegments[]){
+    play(fpc: number,defaultCpm: number,sceneFramess: sceneFrames[],startSceneNum: number,slowSegmentss: SlowSegments[],segPlus1: boolean){
         // シーンが0個だったらreturn null
         if(sceneFramess.length === 0) return new Promise<void>(resolve => resolve())
         const defaultFps = fpc * defaultCpm / 60
@@ -23,30 +23,34 @@ export default class Player {
                 this.pause = ()=>{}
             }
             // 各フレームが表示されるべき時刻を計画する(...ArrはtimeToDrawの一部という意味)
-            let timeToDraw: number[][] = []
+            const defaultInterval = 1000/defaultFps
+            let timeToDraw: number[][] = sceneFramess.map(sceneFrames => sceneFrames.map(_=>defaultInterval))
             for(let scene_i = 0; scene_i < sceneFramess.length; scene_i++){
-                const defaultInterval = 1000/defaultFps
-                let sceneArr = sceneFramess[scene_i].map(_=> defaultInterval)
-                if(scene_i === 0){
-                    sceneArr[0] = 0
-                }else{
-                    const lastSceneArr = timeToDraw[scene_i-1]
-                    sceneArr[0] += lastSceneArr[lastSceneArr.length-1]
-                }
+                const sceneArr = timeToDraw[scene_i] // HACK シャローコピーして添え字をつけなくてよくする
+
                 if(slowSegmentss[scene_i] !== undefined){
                     slowSegmentss[scene_i].forEach(slowSegments => {
                         // 区間の「間」の時間が遅くなるので、let i = ...「+1」になる
-                        for(let i = slowSegments.seg[0]+1; i <= slowSegments.seg[1]; i++){
-                            sceneArr[i] = 1000 / (fpc * slowSegments.cpm / 60)
+                        for(let i = slowSegments.seg[0]+1; i <= slowSegments.seg[1] + (segPlus1?1:0); i++){
+                            if(i < sceneArr.length){
+                                sceneArr[i] = 1000 / (fpc * slowSegments.cpm / 60)
+                            }else if(scene_i+1 < timeToDraw.length){
+                                timeToDraw[scene_i+1][i-sceneArr.length] = 1000 / (fpc * slowSegments.cpm / 60)
+                            }
                         }
                     })
                 }
                 console.log("scene", scene_i,[...sceneArr])
-                for(let i = 0; i < sceneArr.length-1; i++){
-                    sceneArr[i+1] += sceneArr[i]
-                }
-                timeToDraw.push(sceneArr)
             }
+            // 累積する
+            for(let scene_i = 0; scene_i < timeToDraw.length; scene_i++){
+                if(scene_i === 0) timeToDraw[scene_i][0] = 0
+                else timeToDraw[scene_i][0] += timeToDraw[scene_i-1][timeToDraw[scene_i-1].length-1]
+                for(let frame_i = 1; frame_i < timeToDraw[scene_i].length; frame_i++){
+                    timeToDraw[scene_i][frame_i] += timeToDraw[scene_i][frame_i-1]
+                }
+            }
+
             const start = Date.now()
             let curSceneIndex = 0
             let f = 0

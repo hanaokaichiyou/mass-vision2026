@@ -9,6 +9,7 @@ import Scene from "../../global/Scene";
 import IdWindow from "./rightPanel/idWindow";
 import PamphSettings from "./rightPanel/pamphSettings";
 import VarsSettings from "./rightPanel/varsSettings";
+import { setNumKeyOperations } from "../../global/ShortcutKey";
 
 export default class RightPanel extends Narve.Component {
     rootMenu = new RootMenu()
@@ -67,6 +68,8 @@ export default class RightPanel extends Narve.Component {
         this.rootMenu.idBtn.elem.onclick = () => this.windows.switchFocus(this.idWindow)
         this.rootMenu.pamphSettingBtn.elem.onclick = () => this.windows.switchFocus(this.pamphSettings)
         this.rootMenu.varsSettingsBtn.elem.onclick = () => this.windows.switchFocus(this.varsSettings)
+
+        setNumKeyOperations([() => {this.rootBackBtn.elem.focus()}])
     }
     setScene(scene: Scene){
         this.macroEditWindow.setScene(scene)

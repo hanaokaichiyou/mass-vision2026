@@ -7,14 +7,13 @@ export default class EditField extends Narve.Component {
     backCanvas = new BackCanvas()
     personsCanvas = new PersonsCanvas()
     uiCanvas = new UICanvas()
-    fixBtnsArea = nr("div",{class: "fixBtnsArea"})
 
     fixed = false
     layer: Narve.Component
     constructor(){
         super("div",{class: "editField"})
         this.layer = nr("div",{class: "canvasLayer"},this.backCanvas,this.personsCanvas,this.uiCanvas)
-        this.children.set(this.fixBtnsArea,this.layer)
+        this.children.set(this.layer)
         this.backCanvas.drawGrid()        
     }
     fixLayerCenter(){

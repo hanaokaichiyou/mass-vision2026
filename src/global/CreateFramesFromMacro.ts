@@ -37,7 +37,7 @@ export function createFramesFromAction(action: action, curState: PersonState,fpc
         case "rotate":  
             let rotateAngle: number
             try{
-                rotateAngle = action.move.rotateAngle.evaluate(person.variables,true)
+                rotateAngle = action.move.rotateAngle.evaluate(person.variables,true) * (person.reverseFlag?-1:1)
             }catch{
                 message("マクロの解析エラーです。マクロまたは変数設定に誤りがある可能性があります。")
                 return [[],curState]
@@ -49,7 +49,7 @@ export function createFramesFromAction(action: action, curState: PersonState,fpc
             if(absPos === undefined){
                 return [[],curState.clone()]
             }
-            return createSlideFrames(absPos,curState,frameNum)
+            return createSlideFrames(absPos,curState,frameNum,person.reverseFlag)
         case "dyclon":  return createDyclonFrames(action.move,curState,frameNum,person)
     }
 }
@@ -112,8 +112,8 @@ export function createRevolveFrames(move: move_revolve,curState: PersonState,fra
     }),new AccuratePersonState(curState.pos.toRevolved(revolveAngle,move.center),startRotateTheta+revolveAngle)]
 }
 // posは小数許可
-export function createSlideFrames(absPos: Point,curState: PersonState,frameNum: number): [AccuratePersonState[],AccuratePersonState]{
-    const relMove = absPos.sub(curState.pos).toDiff()
+export function createSlideFrames(absPos: Point,curState: PersonState,frameNum: number,reverseFlag: boolean): [AccuratePersonState[],AccuratePersonState]{
+    const relMove = absPos.sub(curState.pos).toDiff().mul(reverseFlag?-1:1)
     const dxy = relMove.mul(frameNum !== 0 ? 1/frameNum : 0)
     const rotateAngle = relMove.length() > 0.0001?
         relMove.angle() :
@@ -121,7 +121,7 @@ export function createSlideFrames(absPos: Point,curState: PersonState,frameNum: 
     return [Array(frameNum).fill(0).map((_,i) => {
         const f = i
         return new AccuratePersonState(curState.pos.add(dxy.mul(f)),rotateAngle)
-    }),new AccuratePersonState(absPos,rotateAngle)]
+    }),new AccuratePersonState(curState.pos.add(relMove),rotateAngle)]
 }
 // posは小数許可
 export function createDyclonFrames(move: move_dyclon,curState: PersonState,frameNum: number,person: Person): [AccuratePersonState[],AccuratePersonState]{

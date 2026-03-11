@@ -1,4 +1,4 @@
-import { Narve, nr } from "narve";
+import { Narve } from "narve";
 import MacroInput from "./bottomPanel/macroInput";
 import TimeLine from "./bottomPanel/timeLine";
 import Scene from "../../global/Scene";
@@ -14,7 +14,7 @@ export default class BottomPanel extends Narve.Component {
     async startInputMacro(defaultval: string){
         this.switchFocus(this.macroInput)
         const newMacro = await this.macroInput.startInputMacro(defaultval)
-        this.switchFocus(nr())
+        this.switchFocus(this.timeLine)
         return newMacro
     }
     setScene(scene: Scene){

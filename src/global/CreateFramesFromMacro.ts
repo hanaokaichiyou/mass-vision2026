@@ -49,7 +49,7 @@ export function createFramesFromAction(action: action, curState: PersonState,fpc
             if(absPos === undefined){
                 return [[],curState.clone()]
             }
-            return createSlideFrames(absPos,curState,frameNum,person.reverseFlag)
+            return createSlideFrames(absPos,curState,frameNum)
         case "dyclon":  return createDyclonFrames(action.move,curState,frameNum,person)
     }
 }
@@ -112,8 +112,8 @@ export function createRevolveFrames(move: move_revolve,curState: PersonState,fra
     }),new AccuratePersonState(curState.pos.toRevolved(revolveAngle,move.center),startRotateTheta+revolveAngle)]
 }
 // posは小数許可
-export function createSlideFrames(absPos: Point,curState: PersonState,frameNum: number,reverseFlag: boolean): [AccuratePersonState[],AccuratePersonState]{
-    const relMove = absPos.sub(curState.pos).toDiff().mul(reverseFlag?-1:1)
+export function createSlideFrames(absPos: Point,curState: PersonState,frameNum: number): [AccuratePersonState[],AccuratePersonState]{
+    const relMove = absPos.sub(curState.pos).toDiff()//.mul(reverseFlag?-1:1)
     const dxy = relMove.mul(frameNum !== 0 ? 1/frameNum : 0)
     const rotateAngle = relMove.length() > 0.0001?
         relMove.angle() :

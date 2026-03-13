@@ -12,7 +12,6 @@ import ScenePage from "./components/ScenePage";
 import ManualPlayer from "./global/ManualPlayer";
 import Person from "./global/Person";
 import MusicPlayer from "./global/MusicPlayer";
-import BottomPanel from "./components/Edit/bottomPanel";
 
 
 export default class App extends Narve.Component {

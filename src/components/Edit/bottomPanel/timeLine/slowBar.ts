@@ -25,8 +25,9 @@ export default class SlowBar extends Narve.Component<HTMLCanvasElement> {
         this.elem.onmouseup   = 
         this.elem.onmouseout  = e => this.onMouseUp(e)
         
+        this.setCountAndResize(0)
     }
-    startScene(count: number,slowSegments: SlowSegments){
+    loadScene(count: number,slowSegments: SlowSegments){
         console.log("count", count)
         this.setCountAndResize(count)
         this.slowSegments = slowSegments

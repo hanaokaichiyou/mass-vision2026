@@ -12,6 +12,7 @@ import ScenePage from "./components/ScenePage";
 import ManualPlayer from "./global/ManualPlayer";
 import Person from "./global/Person";
 import MusicPlayer from "./global/MusicPlayer";
+import BottomPanel from "./components/Edit/bottomPanel";
 
 
 export default class App extends Narve.Component {
@@ -391,8 +392,10 @@ export default class App extends Narve.Component {
         }
         const sceneFrames = createFrames(this.scenes,1)
         if(sceneFrames === null) return
+        
         this.edit.rightPanel.hide()
         this.edit.leftPanel.hide()
+        this.edit.bottomPanel.hide()
         this.edit.editField.uiCanvas.cancel()
         this.edit.editField.uiCanvas.clearAll()
         
@@ -409,5 +412,6 @@ export default class App extends Narve.Component {
         this.edit.topPanel.sceneStateDisp.setCountNum(0)
         this.edit.rightPanel.display()
         this.edit.leftPanel.display()
+        this.edit.bottomPanel.display()
     }
 }

@@ -47,21 +47,5 @@
             height: 0px;
         }
     }
-    & > .bottomPanel{
-        display: block;
-        grid-area: bottomPanel;
-        box-shadow: inset 0px 2px 4px #222;
-        background-color: #282828;
-        box-sizing: border-box;
-        & > .upper{
-            height: fit-content;
-            padding-top: 0.5em;
-        }
-        & > canvas{
-            display: block;
-            margin: auto;
-            max-width: 100%;
-            max-height: 50%;
-        }
-    }
+    
 }

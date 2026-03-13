@@ -24,7 +24,7 @@ export default class Edit extends Narve.Component {
     editField = new EditField()
     topPanel = new TopPanel()
     leftPanel = new LeftPanel()
-    rightPanel = new RightPanel()
+    rightPanel = new RightPanel(this)
     bottomPanel = new BottomPanel()
 
     constructor(_scene: Scene,sceneNum: number){
@@ -576,24 +576,28 @@ export default class Edit extends Narve.Component {
             person.macroIndex = newMacroIndex
             person.reverseFlag = reverseFlag
         })
-        this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
+        this.onMacroApplied()
         this.pushUndo({
             do: () => {
                 persons.forEach(person => {
                     person.macroIndex = newMacroIndex
                     person.reverseFlag = reverseFlag
                 })
-                this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
+                this.onMacroApplied()
             },
             undo: () => {
                 person_macroIndex_reverseFlagPair.forEach(([person,macroIndex]) => {
                     person.macroIndex = macroIndex
                     person.reverseFlag = reverseFlag
                 })
-                this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
+                this.onMacroApplied()
             }
         })
         return true
+    }
+    onMacroApplied(){
+        this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
+        this.bottomPanel.setScene(this.scene)
     }
     async startApplyVars(){
         const varName = this.rightPanel.varsSettings.getVarName()

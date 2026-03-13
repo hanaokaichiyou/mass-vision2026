@@ -2,6 +2,7 @@ import { Narve } from "narve";
 import MacroInput from "./bottomPanel/macroInput";
 import TimeLine from "./bottomPanel/timeLine";
 import Scene from "../../global/Scene";
+import "./style/bottomPanel.css"
 
 export default class BottomPanel extends Narve.Component {
     macroInput = new MacroInput()
@@ -14,7 +15,7 @@ export default class BottomPanel extends Narve.Component {
     async startInputMacro(defaultval: string){
         this.switchFocus(this.macroInput)
         const newMacro = await this.macroInput.startInputMacro(defaultval)
-        this.switchFocus(this.timeLine)
+        this.switchFocus(this.timeLine,"flex")
         return newMacro
     }
     setScene(scene: Scene){
@@ -25,8 +26,8 @@ export default class BottomPanel extends Narve.Component {
                 if(macro === undefined) return 0
                 return macro.totalCount(person.variables)
             }))
-            this.timeLine.massBar.startScene(maxCount)
-            this.timeLine.slowBar.startScene(maxCount,scene.slowSegments)
+            this.timeLine.massBar.loadScene(maxCount)
+            this.timeLine.slowBar.loadScene(maxCount,scene.slowSegments)
         }
     }
 }

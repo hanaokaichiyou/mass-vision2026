@@ -1,4 +1,9 @@
 .bottomPanel {
     display: grid;
     grid-area: bottomPanel;
+    box-shadow: inset 0px 2px 4px #222;
+    background-color: #282828;
+    box-sizing: border-box;
+    padding: 0px 2rem;
+    overflow-x: scroll;
 }

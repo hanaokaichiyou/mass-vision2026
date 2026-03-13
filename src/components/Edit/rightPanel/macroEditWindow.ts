@@ -5,6 +5,7 @@ import Macro from "../../../global/Macro";
 import { UndoFunc } from "../../../global/Undo";
 import { massCanvasDef } from "../../../global/massCanvasDef";
 import { setNumKeyOperations } from "../../../global/ShortcutKey";
+import RightPanel from "../rightPanel";
 
 export default class MacroEditWindow extends Narve.Component {
     macroIndexSelect = nr<HTMLSelectElement>("select")
@@ -15,8 +16,11 @@ export default class MacroEditWindow extends Narve.Component {
     macroDisp = nr("p")
     addMacroBtn = nr("button",{},"4．+　マクロを追加")
     scene: Scene|undefined
-    constructor(){
+
+    parent: RightPanel
+    constructor(parent: RightPanel){
         super("div",{class: "macroEditWindow"})
+        this.parent = parent
         this.children.set(
             this.macroIndexSelect,
             this.macroColorDiv,
@@ -85,20 +89,23 @@ export default class MacroEditWindow extends Narve.Component {
         this.applyMacroBtn.hide()
         this.applyReverseMacroBtn.hide()
 
-        const beforeStr = this.scene.macros[index].macroStr
+        const curStr = this.scene.macros[index].macroStr
         const newStr 
             = this.scene.macros[index].macroStr 
             = await this.startInputMacro(this.scene.macros[index].macroStr)
         this.setMacroIndex(index)
+        this.parent.parent.bottomPanel.setScene(this.parent.parent.scene)
         this.pushUndo({
             do: () => {
                 if(this.scene === undefined) return
                 this.scene.macros[index].macroStr = newStr
+                this.parent.parent.bottomPanel.setScene(this.parent.parent.scene)
                 this.setMacroIndex(index)
             },
             undo: () => {
             if(this.scene === undefined) return
-                this.scene.macros[index].macroStr = beforeStr
+                this.scene.macros[index].macroStr = curStr
+                this.parent.parent.bottomPanel.setScene(this.parent.parent.scene)
                 this.setMacroIndex(index)
             }
         })

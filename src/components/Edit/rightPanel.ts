@@ -10,12 +10,15 @@ import IdWindow from "./rightPanel/idWindow";
 import PamphSettings from "./rightPanel/pamphSettings";
 import VarsSettings from "./rightPanel/varsSettings";
 import { setNumKeyOperations } from "../../global/ShortcutKey";
+import StatusCheckWindow from "./rightPanel/statusCheckWindow";
+import Edit from "../Edit";
 
 export default class RightPanel extends Narve.Component {
     rootMenu = new RootMenu()
 
     deployBtns = new DeployBtns(true)
-    macroEditWindow = new MacroEditWindow()
+    statusCheckWindow = new StatusCheckWindow(this)
+    macroEditWindow = new MacroEditWindow(this)
     slideEditWindow = new SlideEditWindow()
     setColorIndexWindow = new SetColorIndexWindow()
     idWindow = new IdWindow()
@@ -25,6 +28,7 @@ export default class RightPanel extends Narve.Component {
     windows = nr("div",{class: "windows"},
         this.rootMenu,
         this.deployBtns,
+        this.statusCheckWindow,
         this.macroEditWindow,
         this.slideEditWindow,
         this.setColorIndexWindow,
@@ -34,13 +38,17 @@ export default class RightPanel extends Narve.Component {
     )
 
     rootBackBtn = nr("button",{class: "rootBackBtn"},"⌂")
-    constructor(){
+
+    parent: Edit
+    constructor(parent: Edit){
         super("div",{class: "rightPanel"})
+        this.parent = parent
         this.children.set(this.rootBackBtn,this.windows)
         this.windows.switchFocus(this.rootMenu)
 
         this.rootBackBtn.elem.onclick =
         this.deployBtns.elem.oncontextmenu = 
+        this.statusCheckWindow.elem.oncontextmenu = 
         this.macroEditWindow.elem.oncontextmenu = 
         this.slideEditWindow.elem.oncontextmenu = 
         this.setColorIndexWindow.elem.oncontextmenu = 
@@ -56,6 +64,7 @@ export default class RightPanel extends Narve.Component {
         this.rootMenu.deployBtn.elem.onclick = () => this.windows.switchFocus(this.deployBtns)
         // 初期方向設定はleftPanelに指示を出すだけで画面遷移がないのでEdit.tsで記述されている
         // 特殊初期方向設定も同様
+        this.rootMenu.statusCheckBtn.elem.onclick = () => this.windows.switchFocus(this.statusCheckWindow)
         this.rootMenu.macroEditBtn.elem.onclick = () => {
             this.windows.switchFocus(this.macroEditWindow)
             this.macroEditWindow.setMacroIndex(0)

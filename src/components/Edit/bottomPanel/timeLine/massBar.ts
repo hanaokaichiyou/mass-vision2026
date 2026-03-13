@@ -10,8 +10,9 @@ export default class MassBar extends Narve.Component<HTMLCanvasElement> {
     constructor(){
         super("canvas",{class: "massBar"})
         this.ctx = this.elem.getContext("2d")
+        this.setCountAndResize(0)
     }
-    startScene(count: number){
+    loadScene(count: number){
         this.setCountAndResize(count)
         this.renderBar()
     }

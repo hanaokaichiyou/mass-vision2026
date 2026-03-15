@@ -1,7 +1,5 @@
 import { Narve, nr } from "narve";
 import "./style/eightAngleSelect.css"
-import { massCanvasDef } from "../../../global/massCanvasDef";
-import Point from "../../../global/Point";
 
 export default class EightAngleSelect extends Narve.Component {
     protected _value = 90
@@ -21,7 +19,7 @@ export default class EightAngleSelect extends Narve.Component {
         this.children.set(/*this.personMarker,*/...this.angleValPairs.map((pair,index) => {
             const newOpt = nr("div",{class: "angleIndex",style: `grid-area: angleIndex${index}`}, nr("p",{},pair[0]))
             newOpt.elem.onclick = () => {
-                this.onOptionClicked(pair[1],newOpt)
+                this.onOptionClicked(pair[1])
             }
             return newOpt
         }))
@@ -74,7 +72,7 @@ export default class EightAngleSelect extends Narve.Component {
         }
         this.children[index]?.elem.classList.add("selected")
     }
-    onOptionClicked(val: number,option: Narve.Component){
+    onOptionClicked(val: number){
         this._value = val
         this.renderSelected()
         // option.elem.classList.add("selected")

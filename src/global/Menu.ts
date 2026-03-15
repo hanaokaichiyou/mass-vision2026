@@ -272,9 +272,15 @@ export namespace menuFunctions {
         openDlg_read_msvi().then(saveData => {
             if(saveData === null) return
             const scenes = saveDataToScenes(saveData)
+            app.edit.bottomPanel.timeLine.startCounts = {
+                massStartCount: 0,
+                musicStartCount: 0,
+                ...saveData.startCounts
+            }
             app.setScenes(scenes)
             app.edit.rightPanel.pamphSettings.checkeds = saveData.pamphSettings?.colorFills||[]
             app.setDefaultCpm(saveData.defaultCPM || 180)
+            
         })
     }
     export const openMusic = async (app: App) => {
@@ -302,7 +308,13 @@ export namespace menuFunctions {
             return true
         })
         if(ok){
-            openDlg_write_msvi(scenesToSaveData(app.scenes,app.edit.rightPanel.pamphSettings.checkeds,app.defaultCpm))
+            console.log("menu startCOunts",{...app.edit.bottomPanel.timeLine.startCounts})
+            openDlg_write_msvi(scenesToSaveData(
+                app.scenes,
+                app.edit.rightPanel.pamphSettings.checkeds,
+                app.defaultCpm,
+                app.edit.bottomPanel.timeLine.startCounts,
+            ))
         }
     }
     export const print = (app: App) => {

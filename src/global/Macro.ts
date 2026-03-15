@@ -7,12 +7,16 @@ export type action = {
     move: act_move
     count: MathExp.ExpressionTree
 }
-export type act_move = move_break|move_liner|move_rotate|move_revolve|move_slide|/*move_genRevolve|*/move_dyclon
+export type act_move = move_break|move_liner|move_back|move_rotate|move_revolve|move_slide|/*move_genRevolve|*/move_dyclon
 export type move_break = {
     type: "break"
 }
 export type move_liner = {
     type: "liner"
+    dcell: MathExp.ExpressionTree
+}
+export type move_back = {
+    type: "back"
     dcell: MathExp.ExpressionTree
 }
 export type move_rotate = {
@@ -41,7 +45,7 @@ export type move_dyclon = {
     center: Point
     lastRaius: MathExp.ExpressionTree
 }
-export type moveType = "break"|"rotate"|"liner"|"revolve"|"slide"|"dyclon"
+export type moveType = "break"|"rotate"|"liner"|"back"|"revolve"|"slide"|"dyclon"
 
 export default class Macro {
     protected _macroStr: string = ""
@@ -78,12 +82,14 @@ export default class Macro {
 const MathReg = new RegExp(`(?:${MathExp.expReg.source})+`)
 const countReg = new RegExp(`\\[(${MathReg.source})\\]`);// /\[(\d+)\]/
 const _linerReg = new RegExp(`f(?:\{(${MathReg.source})\})?`)
+const _backReg = new RegExp(`bw(?:\{(${MathReg.source})\})?`)
 const _breakReg = /[bi]/
 const _revolveReg = new RegExp(`r([rl])\{(${MathReg.source})\}`)
 const _slideReg = new RegExp(`s\{(${MathReg.source})\}`)
 const _dyclonReg = new RegExp(`dl\{(${MathReg.source})\}`)
 
 const linerReg = new RegExp(_linerReg.source + countReg.source,"g")
+const backReg = new RegExp(_backReg.source + countReg.source,"g")
 const breakReg = new RegExp(_breakReg.source + countReg.source,"g")
 const rotateReg = new RegExp(`t([rl])\{(${MathReg.source})\}`,"g")
 const revolveReg = new RegExp(_revolveReg.source + countReg.source,"g")
@@ -96,8 +102,8 @@ function text2Actions(text: string):action[]{
     const Q = new FastPriorityQueue<[RegExpExecArray,moveType]>((a,b) => {
         return a[0].index < b[0].index
     })
-    const allRegs = [linerReg,breakReg,rotateReg,revolveReg,slideReg,dyclonReg]
-    const moveTypeNames:moveType[] = ["liner","break","rotate","revolve","slide","dyclon"]
+    const allRegs = [linerReg,backReg,breakReg,rotateReg,revolveReg,slideReg,dyclonReg]
+    const moveTypeNames:moveType[] = ["liner","back","break","rotate","revolve","slide","dyclon"]
     allRegs.forEach((reg,i) => {
         while(1){
             const match = reg.exec(pureText)
@@ -119,6 +125,9 @@ function text2Actions(text: string):action[]{
                 break
             case "liner":
                 action = matchToLiner(match)
+                break
+            case "back":
+                action = matchToBack(match)
                 break
             case "rotate":
                 action = matchToRotate(match)
@@ -163,6 +172,24 @@ function matchToLiner(match: RegExpExecArray): action|null{
         return {
             move: {
                 type: "liner",
+                dcell: new MathExp.ExpressionTree(`(${count.source})/(${countPerCell.source})`)
+            },
+            count: count
+        }
+    }catch{
+        return null
+    }
+}
+function matchToBack(match: RegExpExecArray): action|null{
+    if(match[2] === undefined) return null
+    if(match[1] === undefined) match[1] = "3"
+    try {
+        const countPerCell = new MathExp.ExpressionTree(match[1])
+        const count = new MathExp.ExpressionTree(match[2])
+        
+        return {
+            move: {
+                type: "back",
                 dcell: new MathExp.ExpressionTree(`(${count.source})/(${countPerCell.source})`)
             },
             count: count

@@ -18,16 +18,9 @@ export default class BottomPanel extends Narve.Component {
         this.switchFocus(this.timeLine,"flex")
         return newMacro
     }
-    setScene(scene: Scene){
+    setScene(scene: Scene,sceneIndex: number){
         if(scene.persons.length >= 1){
-            const maxCount = Math.max(0,...scene.persons.map(person => {
-                if(person.macroIndex === undefined) return 0
-                const macro = scene.macros[person.macroIndex]
-                if(macro === undefined) return 0
-                return macro.totalCount(person.variables)
-            }))
-            this.timeLine.massBar.loadScene(maxCount)
-            this.timeLine.slowBar.loadScene(maxCount,scene.slowSegments)
+            this.timeLine.loadScene(scene,sceneIndex)
         }
     }
 }

@@ -94,18 +94,18 @@ export default class MacroEditWindow extends Narve.Component {
             = this.scene.macros[index].macroStr 
             = await this.startInputMacro(this.scene.macros[index].macroStr)
         this.setMacroIndex(index)
-        this.parent.parent.bottomPanel.setScene(this.parent.parent.scene)
+        this.parent.parent.bottomPanel.setScene(this.parent.parent.scene,this.parent.parent.sceneIndex)
         this.pushUndo({
             do: () => {
                 if(this.scene === undefined) return
                 this.scene.macros[index].macroStr = newStr
-                this.parent.parent.bottomPanel.setScene(this.parent.parent.scene)
+                this.parent.parent.bottomPanel.setScene(this.parent.parent.scene,this.parent.parent.sceneIndex)
                 this.setMacroIndex(index)
             },
             undo: () => {
             if(this.scene === undefined) return
                 this.scene.macros[index].macroStr = curStr
-                this.parent.parent.bottomPanel.setScene(this.parent.parent.scene)
+                this.parent.parent.bottomPanel.setScene(this.parent.parent.scene,this.parent.parent.sceneIndex)
                 this.setMacroIndex(index)
             }
         })

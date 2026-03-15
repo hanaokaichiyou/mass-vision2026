@@ -20,6 +20,7 @@ import BottomPanel from "./Edit/bottomPanel";
 
 export default class Edit extends Narve.Component {
     scene: Scene
+    sceneIndex: number
 
     editField = new EditField()
     topPanel = new TopPanel()
@@ -32,6 +33,7 @@ export default class Edit extends Narve.Component {
         this.children.set(this.topPanel,this.leftPanel,this.editField,this.rightPanel,this.bottomPanel)
 
         this.scene = _scene
+        this.sceneIndex = sceneNum
         this.setScene(_scene, sceneNum)
 
         this.editField.uiCanvas.onHoveringPointChanged = pos => {
@@ -108,11 +110,13 @@ export default class Edit extends Narve.Component {
         
     }
     setScene(scene: Scene, sceneIndex: number){
+        console.log("sceneIndex in edit", sceneIndex)
         this.scene = scene
+        this.sceneIndex = sceneIndex
         this.rightPanel.setScene(scene)
         this.topPanel.setScene(sceneIndex)
         this.leftPanel.clear()
-        this.bottomPanel.setScene(scene)
+        this.bottomPanel.setScene(scene,sceneIndex)
         this.drawFirstFrame()
         this.editField.uiCanvas.clearAll()
         this.onSceneChanged(scene,sceneIndex)
@@ -601,7 +605,7 @@ export default class Edit extends Narve.Component {
     }
     onMacroApplied(){
         this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
-        this.bottomPanel.setScene(this.scene)
+        this.bottomPanel.setScene(this.scene,this.sceneIndex)
     }
     async startApplyVars(){
         const varName = this.rightPanel.varsSettings.getVarName()

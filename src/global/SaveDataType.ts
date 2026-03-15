@@ -4,6 +4,7 @@ export type saveData_t = {
     scenes: saveDataScene_t[]
     pamphSettings?: saveDataPamphSettings_t
     defaultCPM?: number
+    startCounts?: saveDataStartCounts_t
 }
 export type saveDataScene_t = {
     macros: saveDataMacro_t[]
@@ -37,6 +38,10 @@ export type saveDataSlowSegments_t = {
     seg: [number,number],
     cpm: number
 }
+export type saveDataStartCounts_t = {
+    massStartCount: number
+    musicStartCount: number
+}
 export type saveVars = {
     g?: number
     h?: number
@@ -62,12 +67,13 @@ export type saveDataPamphSettings_t = {
 export function isSaveData(value: any): value is saveData_t {
   if(typeof value === "object")
   if(value !== null)
-  if(Object.keys(value).length <= 3)
+  if(Object.keys(value).length <= 4)
   if("scenes" in value)
   if(Array.isArray(value.scenes))
   if(value.scenes.every(isSaveDataScene))
   if(value.pamphSettings === undefined || isPamphSettings(value.pamphSettings))
   if(value.defaultCPM === undefined || typeof value.defaultCPM === "number")
+  if(value.startCounts === undefined || isSaveDataStartCounts(value.startCounts))
     return true
   return false
 }
@@ -168,7 +174,6 @@ function isPamphSettings(data: any): data is PamphSettings {
     return Array.isArray(data.colorFills) && (data.colorFills as []).every(item => typeof item === 'boolean');
 }
 function isSaveDataSlowSegments(value: any): value is saveDataSlowSegments_t {
-    return true
     return (
         typeof value === "object" &&
         value !== null &&
@@ -179,5 +184,17 @@ function isSaveDataSlowSegments(value: any): value is saveDataSlowSegments_t {
         value.seg.length === 2 &&
         value.seg.every((v:any) => typeof v === "number") &&
         typeof value.cpm === "number"
+    )
+}
+function isSaveDataStartCounts(value: any): value is saveDataStartCounts_t {
+    // return true
+    return(
+        typeof value === "object" &&
+        value !== null &&
+        Object.keys(value).length === 2 &&
+        "massStartCount" in value &&
+        "musicStartCount" in value &&
+        typeof value.massStartCount === "number" &&
+        typeof value.musicStartCount === "number"
     )
 }

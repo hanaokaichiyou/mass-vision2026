@@ -1,5 +1,5 @@
 import { message } from "@tauri-apps/plugin-dialog"
-import { action, move_dyclon, move_liner, move_revolve } from "./Macro"
+import { action, move_back, move_dyclon, move_liner, move_revolve } from "./Macro"
 import { massCanvasDef } from "./massCanvasDef"
 import Person from "./Person"
 import PersonState, { AccuratePersonState } from "./PersonState"
@@ -34,6 +34,7 @@ export function createFramesFromAction(action: action, curState: PersonState,fpc
     switch(action.move.type){
         case "break":   return createBreakFrames(curState,frameNum)
         case "liner":   return createLinerFrames(action.move,curState,frameNum,person)
+        case "back":    return createBackFrames(action.move,curState,frameNum,person)
         case "rotate":  
             let rotateAngle: number
             try{
@@ -89,6 +90,34 @@ export function createLinerFrames(move: move_liner,curState: PersonState,frameNu
         }
     ),new PersonState(curState.pos.add([dx,dy]),curState.rotateAngle)]
 }
+// posは整数
+export function createBackFrames(move: move_back,curState: PersonState,frameNum: number,person: Person): [PersonState[],PersonState]{
+    let dcell: number
+    try{
+        dcell = -move.dcell.evaluate(person.variables) // dcellは小数OK。backWalkなのでdcellは逆になる
+    }catch{
+        message("マクロの解析エラーです。マクロまたは変数設定に誤りがある可能性があります。")
+        return [[],curState]
+    }
+
+    // MEMO 45度単位なので四捨五入で問題なし(切り上げだとcos,sinが負のときに0になる)
+    // MEMO 座標系が一般的なxy座標系と異なり、y軸が下向きに取られていることに注意
+    const cos = Math.round(Math.cos(curState.rotateAngle*Math.PI/180))
+    const sin = -Math.round(Math.sin(curState.rotateAngle*Math.PI/180))
+    const dx = dcell*cos*massCanvasDef.quarity
+    const dy = dcell*sin*massCanvasDef.quarity
+    const ddx = dx/frameNum
+    const ddy = dy/frameNum
+    
+    return [Array(frameNum).fill(0).map((_,i) => {
+        const f = i // [0,frameNum)の範囲でフレームを作成するので整数の範囲では[0,frameNum-1]
+        return new PersonState(
+                curState.pos.add([ddx*f,ddy*f]),
+                curState.rotateAngle
+            )
+        }
+    ),new PersonState(curState.pos.add([dx,dy]),curState.rotateAngle)]
+}
 // posは小数許可
 export function createRevolveFrames(move: move_revolve,curState: PersonState,frameNum: number,person: Person): [AccuratePersonState[],AccuratePersonState]{
     let revolveAngle: number
@@ -113,7 +142,7 @@ export function createRevolveFrames(move: move_revolve,curState: PersonState,fra
 }
 // posは小数許可
 export function createSlideFrames(absPos: Point,curState: PersonState,frameNum: number): [AccuratePersonState[],AccuratePersonState]{
-    const relMove = absPos.sub(curState.pos).toDiff()//.mul(reverseFlag?-1:1)
+    const relMove = absPos.sub(curState.pos).toDiff()
     const dxy = relMove.mul(frameNum !== 0 ? 1/frameNum : 0)
     const rotateAngle = relMove.length() > 0.0001?
         relMove.angle() :
@@ -123,7 +152,7 @@ export function createSlideFrames(absPos: Point,curState: PersonState,frameNum: 
         return new AccuratePersonState(curState.pos.add(dxy.mul(f)),rotateAngle)
     }),new AccuratePersonState(curState.pos.add(relMove),rotateAngle)]
 }
-// posは小数許可
+// posは小数許可。向きは後から指定するのでNaNを代入
 export function createDyclonFrames(move: move_dyclon,curState: PersonState,frameNum: number,person: Person): [AccuratePersonState[],AccuratePersonState]{
     let lastR: number
     try{
@@ -148,8 +177,6 @@ export function createDyclonFrames(move: move_dyclon,curState: PersonState,frame
     const dTheta = frameNum !== 0 ? revolveAngle / frameNum : 0
     const dr = frameNum !== 0 ? lastR/frameNum : 0
 
-    let prePos = curState.pos.clone()
-
     const lastPos = curState.pos.toCloser(center,-lastR+R).toRevolved(revolveAngle * rate,center)
     const lastRotateAngle = lastPos.angle(center) + 90 + (revolveAngle>=0?1:-1)// 接線⊥半径
     return [Array(frameNum).fill(0).map((_,i) => {
@@ -159,18 +186,14 @@ export function createDyclonFrames(move: move_dyclon,curState: PersonState,frame
         if(f > numOfFormerFrames){
             const newR = dr*f
             // TODO 式の導出書く
-            // MEMO 式の導出については別ファイル参照
+            // MEMO 式の導出については別ファイル参照(まだ書いてない)
             const theta = revolveAngle * (R-newR) /  newR
             newPos = curState.pos.toCloser(center,-newR+R).toRevolved(theta,center)
         }
         // ここはずっと同じ(これがあることで、上の処理を回転を止めたときと同じように書くことができる)
         newPos.revolve(dTheta*f,center)
 
-        const rotateAngle = prePos.angle(newPos) // 微分の考え方で向きを決める
-
-        // 更新
-        prePos = newPos.clone()
-        return new AccuratePersonState(newPos,rotateAngle)
+        return new AccuratePersonState(newPos,NaN)
     }), new AccuratePersonState(lastPos,lastRotateAngle)]
 }
 

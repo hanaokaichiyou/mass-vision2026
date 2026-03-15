@@ -2,6 +2,7 @@ import { sceneFrames } from "./Frames"
 import PersonsCanvas from "../components/canvas/personsCanvas"
 import { countState } from "./count"
 import { SlowSegments } from "../components/Edit/bottomPanel/timeLine/slowBar"
+import { StartCounts } from "../components/Edit/bottomPanel/timeLine"
 export default class Player {
     personsCanvas: PersonsCanvas
     playingInterval: NodeJS.Timeout|undefined
@@ -13,14 +14,15 @@ export default class Player {
         this.personsCanvas = personsCanvas
     }
 
-    play(fpc: number,defaultCpm: number,sceneFramess: sceneFrames[],startSceneNum: number,slowSegmentss: SlowSegments[],segPlus1: boolean){
+    play(fpc: number,defaultCpm: number,sceneFramess: sceneFrames[],startSceneNum: number,slowSegmentss: SlowSegments[],segPlus1: boolean,startCounts: StartCounts,startMusic: () => void,stopMusic: () => void){
         // シーンが0個だったらreturn null
         if(sceneFramess.length === 0) return new Promise<void>(resolve => resolve())
         const defaultFps = fpc * defaultCpm / 60
-        return new Promise<void>((resolve) => {
-            this.pause = ()=>{
-                this.stop(resolve)
-                this.pause = ()=>{}
+        return new Promise<void>(async (resolve) => {
+            let killFlag = false
+            this.pause = () => {
+                killFlag = true
+                stopMusic()
             }
             // 各フレームが表示されるべき時刻を計画する(...ArrはtimeToDrawの一部という意味)
             const defaultInterval = 1000/defaultFps
@@ -50,11 +52,29 @@ export default class Player {
                     timeToDraw[scene_i][frame_i] += timeToDraw[scene_i][frame_i-1]
                 }
             }
+            if(killFlag) return resolve()
+            // 音楽は非同期で待つ
+            if(startSceneNum === 0){// 最初のシーンならマスと音楽の再生開始位置調整
+                setTimeout(() => {
+                    if(!killFlag) startMusic()
+                },1000*startCounts.musicStartCount/defaultFps*fpc)
+
+                // マスは同期で待つ(ネストを浅くするため)
+                await new Promise(resolve => setTimeout(resolve,1000*startCounts.massStartCount/defaultFps*fpc))
+                if(killFlag) return resolve()
+            }else{// 最初のシーンでないなら再生しない(将来的には再生開始位置調整したい)
+                // TODO 音楽の再生開始位置調整
+            }
 
             const start = Date.now()
             let curSceneIndex = 0
             let f = 0
             
+            this.pause = ()=>{
+                this.stop(resolve)
+                stopMusic()
+                this.pause = ()=>{}
+            }
             this.playingInterval = setInterval(() => {
                 const cur = Date.now() - start
                 // 計画した時間が来るまで待つ
@@ -80,7 +100,7 @@ export default class Player {
                     curSceneIndex++
                 }
                 if(curSceneIndex >= sceneFramess.length){
-                    this.stop(resolve)
+                    this.pause()
                     return
                 }
             },1000/defaultFps/10)

@@ -1,6 +1,7 @@
 export namespace timeLineDef {
-    export const massBarHeightPx = 30
     export const slowBarHeightPx = 20
+    export const massBarHeightPx = 30
+    export const musicBarHeightPx = 20
     export const normalLineLen = 8
     export const midiumLineLen = 16
     export const longLineLen = 24
@@ -11,4 +12,6 @@ export namespace timeLineDef {
     export const slowBarBack = "#884"
     export const slowBarFront = "#ff8"
     export const slowBarSelectedFront = "#dd7"
+    export const massBarBack = "#88f"
+    export const musicBarBack = "#f88"
 }

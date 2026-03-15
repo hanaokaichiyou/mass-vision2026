@@ -5,9 +5,9 @@ import Scene from "./Scene"
 import Slide, { Link } from "./Slide"
 import Point from "./Point"
 import { massCanvasDef as ms} from "./massCanvasDef"
+import { StartCounts } from "../components/Edit/bottomPanel/timeLine"
 
-export function scenesToSaveData(scenes: Scene[],colorFill: boolean[],defaultCPM: number): saveData_t {
-  
+export function scenesToSaveData(scenes: Scene[],colorFill: boolean[],defaultCPM: number,startCounts: StartCounts): saveData_t {
   return {
     scenes: scenes.map(scene => {
       const personIndexMap = new Map<Person,number>()
@@ -56,7 +56,8 @@ export function scenesToSaveData(scenes: Scene[],colorFill: boolean[],defaultCPM
     pamphSettings: {
       colorFills: colorFill
     },
-    defaultCPM: defaultCPM
+    defaultCPM: defaultCPM,
+    startCounts: startCounts
   }
 }
 export function saveDataToScenes(saveData: saveData_t): Scene[] {

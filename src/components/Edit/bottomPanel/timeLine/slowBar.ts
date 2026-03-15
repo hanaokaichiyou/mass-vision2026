@@ -2,6 +2,7 @@ import { Narve } from "narve";
 import { timeLineDef } from "./timeLineDef";
 import Point from "../../../../global/Point";
 import { UUID } from "../../../../global/utility";
+import TimeLine, { StartCounts } from "../timeLine";
 
 export type SlowSegments =  Map<UUID,{seg: [number,number], cpm: number}>
 export default class SlowBar extends Narve.Component<HTMLCanvasElement> {
@@ -15,8 +16,11 @@ export default class SlowBar extends Narve.Component<HTMLCanvasElement> {
     slowSegments: SlowSegments = new Map()
     count = 0
     defaultCPM = 180
-    constructor(){
+
+    parent: TimeLine
+    constructor(parent: TimeLine){
         super("canvas",{class: "slowBar"})
+        this.parent = parent
         this.ctx = this.elem.getContext("2d")
 
         this.elem.oncontextmenu = e => e.preventDefault()
@@ -27,8 +31,12 @@ export default class SlowBar extends Narve.Component<HTMLCanvasElement> {
         
         this.setCountAndResize(0)
     }
+    reload(startCounts: StartCounts = this.parent.startCounts){
+        this.setCountAndResize(this.count,startCounts.massStartCount)
+        this.renderBar(startCounts.massStartCount)
+        this.renderSeg(startCounts.massStartCount)
+    }
     loadScene(count: number,slowSegments: SlowSegments){
-        console.log("count", count)
         this.setCountAndResize(count)
         this.slowSegments = slowSegments
 
@@ -37,28 +45,30 @@ export default class SlowBar extends Narve.Component<HTMLCanvasElement> {
         /*　FROM 
         [x] src\global\CreateSaveData.tsでscenesのslowSegmentsを保存できるようにする 
         [x] 読み込めるようにする
-        [ ] 再生のタイミングでslowSegmentsを反映できるようにする
-        [ ] slowBarがsceneのslowSegmentsを直接触れるように、シーン変更時と、最初にslowSegmentsを渡す
+        [x] 再生のタイミングでslowSegmentsを反映できるようにする
+        [x] slowBarがsceneのslowSegmentsを直接触れるように、シーン変更時と、最初にslowSegmentsを渡す
         [ ] 右エリアのメニューにスロー設定とかつけてみる？無しでもいいかな
         */
     }
-    setCountAndResize(count: number){
+    setCountAndResize(count: number,massStartCount = this.parent.startCounts.massStartCount){
         this.count = count
 
-        this.Width = this.count * timeLineDef.countLineGapPx + 1
+        this.Width = (massStartCount + this.count) * timeLineDef.countLineGapPx + 1
+        if(this.count === 0) this.Width = 0
         this.Height = timeLineDef.slowBarHeightPx
         
         this.elem.width = this.Width
         this.elem.height = this.Height
     }
-    renderBar(){
+    renderBar(massStartCount = this.parent.startCounts.massStartCount){
         if(this.ctx === null) return
+        const gap = timeLineDef.countLineGapPx
         this.ctx.fillStyle = timeLineDef.slowBarBack
         this.ctx.beginPath()
-        this.ctx.fillRect(0,0,this.count * timeLineDef.countLineGapPx + 1,timeLineDef.massBarHeightPx)
+        this.ctx.fillRect(massStartCount * gap,0,this.count * gap + 1,timeLineDef.massBarHeightPx)
     }
-    renderSeg(){
-        this.slowSegments.forEach(({seg}) => this.drawASeg(seg))
+    renderSeg(massStartCount = this.parent.startCounts.massStartCount){
+        this.slowSegments.forEach(({seg}) => this.drawASeg(seg,false,massStartCount))
     }
     onMouseMove(e: MouseEvent){
         const count = this.offsetToCount(e)
@@ -158,23 +168,25 @@ export default class SlowBar extends Narve.Component<HTMLCanvasElement> {
     protected offsetToCount(e: MouseEvent){
         const gap = timeLineDef.countLineGapPx
         const px = Math.round(e.offsetX*(this.Width/this.elem.getBoundingClientRect().width))
+            - this.parent.startCounts.massStartCount * gap
         const py = Math.round(e.offsetY*(this.Height/this.elem.getBoundingClientRect().height))
         const point = new Point(px,py).nearestGrid(gap)
         return Math.round(point.x / gap)
     }
-    protected drawASeg(seg: [number,number],selected = false){
+    protected drawASeg(seg: [number,number],selected = false,massStartCount = this.parent.startCounts.massStartCount){
         if(this.ctx === null) return
         const gap = timeLineDef.countLineGapPx
         this.ctx.fillStyle = selected? timeLineDef.slowBarSelectedFront : timeLineDef.slowBarFront
         this.ctx.beginPath()
-        this.ctx.fillRect(seg[0]*gap, 0, (seg[1] - seg[0]) * gap, timeLineDef.slowBarHeightPx)
+        this.ctx.fillRect((massStartCount + seg[0])*gap, 0, (seg[1] - seg[0]) * gap, timeLineDef.slowBarHeightPx)
     }
     protected eraceASeg(seg: [number,number]){
         if(this.ctx === null) return
         const gap = timeLineDef.countLineGapPx
+        const startCnt = this.parent.startCounts.massStartCount
         this.ctx.fillStyle = timeLineDef.slowBarBack
         this.ctx.beginPath()
-        this.ctx.fillRect(seg[0]*gap, 0, (seg[1] - seg[0]) * gap, timeLineDef.slowBarHeightPx)
+        this.ctx.fillRect((startCnt + seg[0])*gap, 0, (seg[1] - seg[0]) * gap, timeLineDef.slowBarHeightPx)
     }
     protected addAndDrawSegByCount(startCount: number,length = 1){
         // Warning どれかの区間にstartCountが含まれているかの確認はしないので注意
@@ -194,7 +206,6 @@ export default class SlowBar extends Narve.Component<HTMLCanvasElement> {
     protected updateAndDrawSeg(id: UUID, newSeg: [number,number],selected = false){
         const cur = this.slowSegments.get(id)
         if(cur === undefined) return
-        if(this.ctx === null) return
         const curSeg = cur.seg
         // 更新
         this.slowSegments.set(id,{seg: newSeg,cpm: cur.cpm})

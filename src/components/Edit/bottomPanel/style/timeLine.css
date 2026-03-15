@@ -9,9 +9,26 @@
     & > canvas{
         &.massBar{
             height: 40%;
+            cursor: not-allowed;
+            &.editable{
+                cursor: grab;
+            }
+            &.editting{
+                cursor: grabbing;
+            }
         }
         &.slowBar{
             height: 30%;
+        }
+        &.musicBar{
+            height: 30%;
+            cursor: not-allowed;
+            &.editable{
+                cursor: grab;
+            }
+            &.editting{
+                cursor: grabbing;
+            }
         }
     }
 }

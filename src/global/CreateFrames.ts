@@ -74,10 +74,10 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
             })
             // 向きを進行方向に修正
             for(let i = 0;i < personalFrames.length-1;i++){
-                // 次フレームへの移動があればその方向を向く
+                // 次フレームへの移動があるかつ、方向がNaNならその方向を向く
                 // 無ければ触らず、もともと設定されていた向きを向く
                 const vec = new PointDiff(...personalFrames[i+1].state.pos.sub(personalFrames[i].state.pos).getPair())
-                if(vec.length() > 0.0001){ // 移動していれば
+                if(vec.length() > 0.0001 && Number.isNaN(personalFrames[i].state.rotateAngle)){ // 移動していればかつ方向がNaNなら
                     personalFrames[i].state.rotateAngle = vec.angle()
                 }
             }

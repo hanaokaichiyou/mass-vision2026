@@ -365,8 +365,18 @@ export default class App extends Narve.Component {
                 this.edit.topPanel.sceneStateDisp.setSceneIndex(countState.sceneIndex)
                 this.edit.topPanel.sceneStateDisp.setCountNum(countState.count)
             }
-            this.musicPlayer.play()
-            await this.player.play(1,this.defaultCpm,sceneFrames,startSceneNum||0,slowSegmentss,this.segPlus1)
+            // this.musicPlayer.play()
+            await this.player.play(
+                1,
+                this.defaultCpm,
+                sceneFrames,
+                startSceneNum||0,
+                slowSegmentss,
+                this.segPlus1,
+                this.edit.bottomPanel.timeLine.startCounts,
+                () => this.musicPlayer.play(),
+                () => this.musicPlayer.pause()
+            )
         }else{
             console.log("manualPlay",isAutoPlay)
             this.manualPlayer.onCountChanged = (countState) => {
@@ -375,7 +385,6 @@ export default class App extends Narve.Component {
             }
             await this.manualPlayer.play(1,sceneFrames,startSceneNum)
         }
-        this.musicPlayer.pause()
         this.playing = false
         await message("アニメーション終了")
         this.edit.drawFirstFrame()

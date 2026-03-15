@@ -42,7 +42,12 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[]){
                 accCount += count
                 switch(action.move.type){
                     case "break": return new Pamph_Break_Cnvs(count)
+                    // TODO　「立ち」のパンフでの表示に困ってる
                     case "liner": return new Pamph_Move_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)))
+                    case "back": 
+                        if(count === 1 && Math.abs(action.move.dcell.evaluate(person.variables) - (1/8)) < 0.001) // 座り
+                            return new Pamph_Sit_Cnvs()
+                        return new Pamph_Move_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)))
                     case "rotate": 
                         // MEMO シーンをまたいだ連続の方転は繋げれるけど、同シーン内で連続してたら正しく動作しない
                         const normalRet = new Pamph_Rotate_Cnvs(action.move.rotateAngle.evaluate(person.variables,true))
@@ -177,6 +182,21 @@ class Pamph_Move_Cnvs extends Narve.Component<HTMLCanvasElement> {
             ctx.fillText(`1マス${cpcell}`,center[0],170)
         }
 
+    }
+}
+class Pamph_Sit_Cnvs extends Narve.Component<HTMLCanvasElement> {
+    constructor(){
+        super("canvas",{class: "pamph_move"})
+        const ctx = this.elem.getContext("2d")
+        if(ctx === null) return
+
+        const center: [number,number] = [80,80]
+        this.elem.width = 160
+        this.elem.height = 200
+        ctx.textBaseline = "middle"
+        ctx.textAlign    = "center"
+        ctx.font = "50px sans-serif"
+        ctx.fillText(`座り`,...center)
     }
 }
 class Pamph_Break_Cnvs extends Narve.Component<HTMLCanvasElement> {

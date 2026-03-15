@@ -31,7 +31,6 @@ export function createFrames(scenes: Scene[],fpc: number,fromScene?: number,toSc
 // 閉区間(最後のシーン)または右半開区間(その他)で返す
 function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sceneFrames|null{
     // マクロindexが指定されており、そのindexのマクロが存在するpersonだけでフレームを作る
-    console.log("persons",scene.persons)
     let persons = scene.persons
         .filter((p) => p.macroIndex !== undefined && scene.macros[p.macroIndex] !== undefined)
 
@@ -47,8 +46,6 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
 
     const countNum = maxCount
     const frameNum = fpc * countNum + (closeSegment?1:0)
-    console.log("countNum",countNum)
-    console.log("actionss", scene.macros)
     let sceneFrames: sceneFrames = Array(frameNum).fill(0).map(_ => [])
     try{ // sceneFramesの長さが十分でないときにエラーを吐くので、それの対策
         persons.forEach((person,debug) => {
@@ -57,7 +54,6 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
             if(person.macroIndex === undefined) return
             if(person.startState === undefined) return
             let curState = person.startState.clone()
-            console.log("id: ",person.id,"curState(start): ",curState)
             let personalFrames:frame = []
             scene.macros[person.macroIndex].actions.forEach(action => {
                 const [frames,newState] = createFramesFromAction(action,curState,fpc,slides,person)
@@ -82,7 +78,6 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
                 // 無ければ触らず、もともと設定されていた向きを向く
                 const vec = new PointDiff(...personalFrames[i+1].state.pos.sub(personalFrames[i].state.pos).getPair())
                 if(vec.length() > 0.0001){ // 移動していれば
-                    console.log("moveing vec",vec)
                     personalFrames[i].state.rotateAngle = vec.angle()
                 }
             }

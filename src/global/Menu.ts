@@ -104,21 +104,28 @@ export default async function createMenu(app: App){
                 text: "マニュアル再生",
                 accelerator: "Ctrl+M",
                 action: () => {
-                    app.manualPlay(app.currentSceneIdx)
+                    app.play(false)
                 }
             },
             {
                 text: "自動再生",
                 accelerator: "Ctrl+K",
                 action: () => {
-                    app.play()
+                    app.play(true)
+                }
+            },
+            {
+                text: "このシーンだけマニュアル再生",
+                accelerator: "Ctrl+N",
+                action: () => {
+                    app.play(false,app.currentSceneIdx)
                 }
             },
             {
                 text: "このシーンだけ自動再生", 
                 accelerator: "Ctrl+H",
                 action: () => {
-                    app.play(app.currentSceneIdx)
+                    app.play(true,app.currentSceneIdx)
                 }
             },
             {

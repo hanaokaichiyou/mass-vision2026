@@ -273,22 +273,22 @@ export default class App extends Narve.Component {
             }
         })
     }
-    async play(sceneNum?: number){
+    async play(isAutoPlay: boolean,startSceneNum?: number){
         if(this.playing){
             await message("すでに再生中です。")
             return
         }
         this.playing = true
-        if(typeof sceneNum === "number"){
-            if(sceneNum < 0 || sceneNum >= this.scenes.length){
+        if(typeof startSceneNum === "number"){
+            if(startSceneNum < 0 || startSceneNum >= this.scenes.length){
                 // 普通にアプリを操作していたらあり得ないはず
                 await message("現在のシーンが見つかりませんでした。")
                 return 
             }
-            if(!PlayConditions.macroOk(this.scenes[sceneNum])){
+            if(!PlayConditions.macroOk(this.scenes[startSceneNum])){
                 await message("マクロが設定されてない人がいます。\nマクロが設定されていない人は表示されません。")
             }
-            if(!PlayConditions.countOk(this.scenes[sceneNum])){
+            if(!PlayConditions.countOk(this.scenes[startSceneNum])){
                 await message("カウント数が一致しません。\n最大カウント数の人のみ表示されます。")
             }
 
@@ -299,11 +299,11 @@ export default class App extends Narve.Component {
                 overlappingPersonIds: number[][]
             } = {frameNum:-1,overlappingPersonIds:[]}
             let firstOverlappingSceneIndex = -1
-            const overlappingFrames = PlayConditions.overlappingFrames(this.scenes[sceneNum])
+            const overlappingFrames = PlayConditions.overlappingFrames(this.scenes[startSceneNum])
             if(overlappingFrames === undefined) return
             if(overlappingFrames.length > 0 && firstOverlappingSceneIndex === -1){
                 firstOverlap = overlappingFrames[0]
-                firstOverlappingSceneIndex = sceneNum
+                firstOverlappingSceneIndex = startSceneNum
             }
             if(firstOverlappingSceneIndex !== -1){
                 await message(`シーン${firstOverlappingSceneIndex+1}のフレーム${firstOverlap.frameNum}で${
@@ -342,14 +342,11 @@ export default class App extends Narve.Component {
             }
         }
 
-        const sceneFrames = createFrames(this.scenes,1,sceneNum,sceneNum)
+        const sceneFrames = createFrames(this.scenes,1,startSceneNum,startSceneNum)
         if(sceneFrames === null){
             this.playing = false
             return
         }
-        const slowSegmentss = sceneNum === undefined?
-            this.scenes.map(scene => scene.slowSegments) :
-            [this.scenes[sceneNum].slowSegments]
 
         this.edit.rightPanel.hide()
         this.edit.leftPanel.hide()
@@ -357,12 +354,27 @@ export default class App extends Narve.Component {
         this.edit.editField.uiCanvas.cancel()
         this.edit.editField.uiCanvas.clearAll()
         
-        this.player.onCountChanged = (countState) => {
-            this.edit.topPanel.sceneStateDisp.setSceneIndex(countState.sceneIndex)
-            this.edit.topPanel.sceneStateDisp.setCountNum(countState.count)
+        
+        if(isAutoPlay){
+            console.log("autoPlay")
+            const slowSegmentss = startSceneNum === undefined?
+                this.scenes.map(scene => scene.slowSegments) :
+                [this.scenes[startSceneNum].slowSegments]
+
+            this.player.onCountChanged = (countState) => {
+                this.edit.topPanel.sceneStateDisp.setSceneIndex(countState.sceneIndex)
+                this.edit.topPanel.sceneStateDisp.setCountNum(countState.count)
+            }
+            this.musicPlayer.play()
+            await this.player.play(1,this.defaultCpm,sceneFrames,startSceneNum||0,slowSegmentss,this.segPlus1)
+        }else{
+            console.log("manualPlay",isAutoPlay)
+            this.manualPlayer.onCountChanged = (countState) => {
+                this.edit.topPanel.sceneStateDisp.setSceneIndex(countState.sceneIndex)
+                this.edit.topPanel.sceneStateDisp.setCountNum(countState.count)
+            }
+            await this.manualPlayer.play(1,sceneFrames,startSceneNum)
         }
-        this.musicPlayer.play()
-        await this.player.play(1,this.defaultCpm,sceneFrames,sceneNum||0,slowSegmentss,this.segPlus1)
         this.musicPlayer.pause()
         this.playing = false
         await message("アニメーション終了")
@@ -373,44 +385,44 @@ export default class App extends Narve.Component {
         this.edit.leftPanel.display()
         this.edit.bottomPanel.display()
     }
-    async manualPlay(scene?: number){
-        if(this.playing){
-            await message("すでに再生中です。")
-            return
-        }
-        this.playing = true
-        if(!this.scenes.every(scene => PlayConditions.macroOk(scene))){
-            await message("マクロが設定されてない人がいます。\nマクロが設定されていない人は表示されません。")
-        }
-        if(!this.scenes.every(scene => PlayConditions.countOk(scene))){
-            await message("カウント数が一致しません。\n最大カウント数の人のみ表示されます。")
-        }
-        const overlappingFrames = this.scenes.map(scene => PlayConditions.overlappingFrames(scene)).filter(v => v?v.length > 0 : false)
-        if(overlappingFrames.length > 0){
-            await message("人同士の衝突が発生しています。")
-        }
-        const sceneFrames = createFrames(this.scenes,1)
-        if(sceneFrames === null) return
+    // async manualPlay(startSceneNum?: number){
+    //     if(this.playing){
+    //         await message("すでに再生中です。")
+    //         return
+    //     }
+    //     this.playing = true
+    //     if(!this.scenes.every(scene => PlayConditions.macroOk(scene))){
+    //         await message("マクロが設定されてない人がいます。\nマクロが設定されていない人は表示されません。")
+    //     }
+    //     if(!this.scenes.every(scene => PlayConditions.countOk(scene))){
+    //         await message("カウント数が一致しません。\n最大カウント数の人のみ表示されます。")
+    //     }
+    //     const overlappingFrames = this.scenes.map(scene => PlayConditions.overlappingFrames(scene)).filter(v => v?v.length > 0 : false)
+    //     if(overlappingFrames.length > 0){
+    //         await message("人同士の衝突が発生しています。")
+    //     }
+    //     const sceneFrames = createFrames(this.scenes,1)
+    //     if(sceneFrames === null) return
         
-        this.edit.rightPanel.hide()
-        this.edit.leftPanel.hide()
-        this.edit.bottomPanel.hide()
-        this.edit.editField.uiCanvas.cancel()
-        this.edit.editField.uiCanvas.clearAll()
+    //     this.edit.rightPanel.hide()
+    //     this.edit.leftPanel.hide()
+    //     this.edit.bottomPanel.hide()
+    //     this.edit.editField.uiCanvas.cancel()
+    //     this.edit.editField.uiCanvas.clearAll()
         
-        this.manualPlayer.onCountChanged = (countState) => {
-            this.edit.topPanel.sceneStateDisp.setSceneIndex(countState.sceneIndex)
-            this.edit.topPanel.sceneStateDisp.setCountNum(countState.count)
-        }
-        await this.manualPlayer.play(1,sceneFrames,scene)
-        window.onkeydown = _=>{}
-        this.playing = false
-        await message("アニメーション終了")
-        this.edit.drawFirstFrame()
-        this.edit.topPanel.sceneStateDisp.setSceneIndex(this.currentSceneIdx)
-        this.edit.topPanel.sceneStateDisp.setCountNum(0)
-        this.edit.rightPanel.display()
-        this.edit.leftPanel.display()
-        this.edit.bottomPanel.display()
-    }
+    //     this.manualPlayer.onCountChanged = (countState) => {
+    //         this.edit.topPanel.sceneStateDisp.setSceneIndex(countState.sceneIndex)
+    //         this.edit.topPanel.sceneStateDisp.setCountNum(countState.count)
+    //     }
+    //     await this.manualPlayer.play(1,sceneFrames,startSceneNum)
+    //     // window.onkeydown = _=>{}
+    //     this.playing = false
+    //     await message("アニメーション終了")
+    //     this.edit.drawFirstFrame()
+    //     this.edit.topPanel.sceneStateDisp.setSceneIndex(this.currentSceneIdx)
+    //     this.edit.topPanel.sceneStateDisp.setCountNum(0)
+    //     this.edit.rightPanel.display()
+    //     this.edit.leftPanel.display()
+    //     this.edit.bottomPanel.display()
+    // }
 }

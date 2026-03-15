@@ -6,7 +6,6 @@ let numberKeyOperations = Array(10).fill(0).map(() => ()=>{})
 export function setNumKeyOperations(ops: ((()=>void)|undefined)[]){
     ops.slice(0,10).forEach((op,i) => {
         if(op !== undefined) numberKeyOperations[i] = op
-        console.log("setop ",i,op)
     })
 }
 export default async function registerShortcutKey(app: App){
@@ -35,9 +34,10 @@ export default async function registerShortcutKey(app: App){
     await register("Ctrl+Shift+D", (e) => ur(e,()=>menuFunctions.removeScene(app)))
     await register("Ctrl+Z", (e) => ur(e,()=>app.undo.undo()))
     await register("Ctrl+Y", (e) => ur(e,()=>app.undo.redo()))
-    await register("Ctrl+K", (e) => ur(e,()=>app.play()))
-    await register("Ctrl+M", (e) => ur(e,()=>app.manualPlay()))
-    await register("Ctrl+H", (e) => ur(e,()=>app.play(app.currentSceneIdx)))
+    await register("Ctrl+K", (e) => ur(e,()=>app.play(true)))
+    await register("Ctrl+M", (e) => ur(e,()=>app.play(false)))
+    await register("Ctrl+N", (e) => ur(e,()=>app.play(false,app.currentSceneIdx)))
+    await register("Ctrl+H", (e) => ur(e,()=>app.play(true,app.currentSceneIdx)))
     await register("Ctrl+F", (e) => ur(e,()=>app.edit.editField.fixLayer()))
     await register("Ctrl+D", (e) => ur(e,()=>app.edit.editField.unFixLayer()))
     await register("Ctrl+B", (e) => ur(e,()=>app.edit.editField.fixLayerCenter()))

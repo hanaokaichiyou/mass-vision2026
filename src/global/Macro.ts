@@ -106,14 +106,12 @@ function text2Actions(text: string):action[]{
             Q.add([match,name])
         }
     })
-    console.log("Q",Q)
     let actions:action[] = []
     while(!Q.isEmpty()){
         const top = Q.poll()
         if(top === undefined) break
         const [match,name] = top
         let action: action|null = null
-        console.log("match",match)
 
         switch(name){
             case "break":

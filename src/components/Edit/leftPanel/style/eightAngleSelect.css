@@ -1,0 +1,31 @@
+.eightAngleSelect{
+    display: grid;
+    grid-template: 
+    "angleIndex0 angleIndex1 angleIndex2"33%
+    "angleIndex3 personMarker angleIndex4"33%
+    "angleIndex5 angleIndex6 angleIndex7" auto/
+    33% 33% auto
+    ;
+    width: 60%;
+    aspect-ratio: 1;
+    & > .personMarker {
+        grid-area: personMarker;
+        width: 100%;
+        height: 100%;
+    }
+    & > .angleIndex {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0px;
+        cursor: default;
+        border-radius: 25%;
+        & > p{
+            margin: 0px;
+        }
+        &.selected{
+            background-color: #1c1fb3;
+        }
+        
+    }
+}

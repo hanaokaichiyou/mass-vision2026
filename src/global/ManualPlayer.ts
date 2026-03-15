@@ -8,7 +8,7 @@ export default class ManualPlayer {
         this.personsCanvas = personsCanvas
     }
 
-    play(fpc: number,sceneFrames: sceneFrames[],startScene = 0){
+    play(fpc: number,sceneFrames: sceneFrames[],startSceneNum = 0){
         if(sceneFrames.length === 0) return new Promise<void>(resolve => resolve())
         return new Promise<void>((resolve) => {
             window.onkeydown = e => {
@@ -16,9 +16,8 @@ export default class ManualPlayer {
                 if(e.key === "ArrowDown")  this.prev(),e.preventDefault()
                 if(e.key === "ArrowRight") this.nextScene(),e.preventDefault()
                 if(e.key === "ArrowLeft")  this.prevScene(),e.preventDefault()
-                // if(e.key === "Escape") window.onkeydown = ()=>{},this.pause()
             }
-            let curSceneIndex = startScene
+            let curSceneIndex = 0
             let f = 0
             const drawCurFrame = () => {
                 this.personsCanvas.clearAll()
@@ -32,7 +31,7 @@ export default class ManualPlayer {
             const checkCountChange = () => {
                 if(f%fpc === 0){
                     this.onCountChanged({
-                        sceneIndex: curSceneIndex,
+                        sceneIndex: curSceneIndex + startSceneNum,
                         count: f/fpc
                     })
                 }
@@ -95,7 +94,7 @@ export default class ManualPlayer {
             }
             drawCurFrame()
             this.onCountChanged({
-                sceneIndex: curSceneIndex,
+                sceneIndex: curSceneIndex + startSceneNum,
                 count: f/fpc
             })
         })

@@ -7,6 +7,7 @@ import ExpandWindow from "./leftPanel/expandWindow";
 import { massCanvasDef } from "../../global/massCanvasDef";
 import NumOfPeopleDisp from "./leftPanel/numOfPeopleDist";
 import { getPersonSelectSettingVal } from "../../global/Menu";
+import EightAngleSelect from "./leftPanel/eightAngleSelect";
 
 export default class LeftPanel extends Narve.Component {
     slctedPeopleNumDisp = nr("p")
@@ -31,6 +32,7 @@ export default class LeftPanel extends Narve.Component {
         nr("option",{value: "180"},"270"),
         nr("option",{value: "135"},"315")
     )
+    rotateAngleSelect = new EightAngleSelect()
     distanceSelect = nr<HTMLSelectElement>("select",{},
         nr("option",{value: massCanvasDef.quarity/3},"1/3"),
         nr("option",{value: massCanvasDef.quarity/2},"1/2"),
@@ -60,7 +62,7 @@ export default class LeftPanel extends Narve.Component {
             this.numOfPeopleDisp,
             this.axisDisp,this.expandWindow,
             this.modeDisp,this.orderDisp,
-            this.numberInput,this.angleSelect,this.distanceSelect,this.rangeSelect,this.alignSelect,
+            this.numberInput,this.angleSelect,this.rotateAngleSelect,this.distanceSelect,this.rangeSelect,this.alignSelect,
             this.okBtn
         )
         /*this.highlightText.elem.oninput = _ => {
@@ -83,6 +85,7 @@ export default class LeftPanel extends Narve.Component {
         this.okBtn.hide()
         this.numberInput.hide()
         this.angleSelect.hide()
+        this.rotateAngleSelect.hide()
         this.distanceSelect.hide()
         this.rangeSelect.hide()
         this.alignSelect.hide()
@@ -151,7 +154,7 @@ export default class LeftPanel extends Narve.Component {
     }
     askAngle(str: string): Promise<number|null>{
         this.orderDisp.setInnerText(str)
-        this.angleSelect.display()
+        this.angleSelect.display("grid")
         this.angleSelect.elem.focus()
         this.okBtn.display()
         return new Promise(resolve => {
@@ -165,6 +168,9 @@ export default class LeftPanel extends Narve.Component {
             this.cancel = () => resolve(null)
             this.cancel = () => {}
         })
+    }
+    dispRotateAngleSelect(){
+        this.rotateAngleSelect.display("grid")
     }
     askDistance(str: string): Promise<number|null>{
         this.orderDisp.setInnerText(str)
@@ -218,6 +224,7 @@ export default class LeftPanel extends Narve.Component {
         this.modeDisp.setInnerText("")
         this.orderDisp.setInnerText("")
         this.angleSelect.hide()
+        this.rotateAngleSelect.hide()
         this.distanceSelect.hide()
         this.rangeSelect.hide()
         this.alignSelect.hide()

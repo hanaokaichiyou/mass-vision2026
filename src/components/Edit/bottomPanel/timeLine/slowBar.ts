@@ -171,7 +171,7 @@ export default class SlowBar extends Narve.Component<HTMLCanvasElement> {
             - this.parent.startCounts.massStartCount * gap
         const py = Math.round(e.offsetY*(this.Height/this.elem.getBoundingClientRect().height))
         const point = new Point(px,py).nearestGrid(gap)
-        return Math.round(point.x / gap)
+        return Math.max(0,Math.round(point.x / gap))
     }
     protected drawASeg(seg: [number,number],selected = false,massStartCount = this.parent.startCounts.massStartCount){
         if(this.ctx === null) return

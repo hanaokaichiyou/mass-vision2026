@@ -52,6 +52,8 @@ export function createFramesFromAction(action: action, curState: PersonState,fpc
             }
             return createSlideFrames(absPos,curState,frameNum)
         case "dyclon":  return createDyclonFrames(action.move,curState,frameNum,person)
+        case "sit": return createSitFrames(curState,frameNum)
+        case "stand": return createStandFrames(curState,frameNum)
     }
 }
 
@@ -195,6 +197,46 @@ export function createDyclonFrames(move: move_dyclon,curState: PersonState,frame
 
         return new AccuratePersonState(newPos,NaN)
     }), new AccuratePersonState(lastPos,lastRotateAngle)]
+}
+export function createSitFrames(curState: PersonState,frameNum: number): [PersonState[],PersonState]{
+    // MEMO 45度単位なので四捨五入で問題なし(切り上げだとcos,sinが負のときに0になる)
+    // MEMO 座標系が一般的なxy座標系と異なり、y軸が下向きに取られていることに注意
+    const dcell = -1/8
+    const cos = Math.cos(curState.rotateAngle*Math.PI/180)
+    const sin = -Math.sin(curState.rotateAngle*Math.PI/180)
+    const dx = dcell*cos*massCanvasDef.quarity
+    const dy = dcell*sin*massCanvasDef.quarity
+    const ddx = dx/frameNum
+    const ddy = dy/frameNum
+    
+    return [Array(frameNum).fill(0).map((_,i) => {
+        const f = i // [0,frameNum)の範囲でフレームを作成するので整数の範囲では[0,frameNum-1]
+        return new PersonState(
+                curState.pos.add([ddx*f,ddy*f]),
+                curState.rotateAngle
+            )
+        }
+    ),new PersonState(curState.pos.add([dx,dy]),curState.rotateAngle)]
+}
+export function createStandFrames(curState: PersonState,frameNum: number): [PersonState[],PersonState]{
+    // MEMO 45度単位なので四捨五入で問題なし(切り上げだとcos,sinが負のときに0になる)
+    // MEMO 座標系が一般的なxy座標系と異なり、y軸が下向きに取られていることに注意
+    const dcell = 1/8
+    const cos = Math.cos(curState.rotateAngle*Math.PI/180)
+    const sin = -Math.sin(curState.rotateAngle*Math.PI/180)
+    const dx = dcell*cos*massCanvasDef.quarity
+    const dy = dcell*sin*massCanvasDef.quarity
+    const ddx = dx/frameNum
+    const ddy = dy/frameNum
+    
+    return [Array(frameNum).fill(0).map((_,i) => {
+        const f = i // [0,frameNum)の範囲でフレームを作成するので整数の範囲では[0,frameNum-1]
+        return new PersonState(
+                curState.pos.add([ddx*f,ddy*f]),
+                curState.rotateAngle
+            )
+        }
+    ),new PersonState(curState.pos.add([dx,dy]),curState.rotateAngle)]
 }
 
 

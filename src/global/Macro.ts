@@ -3,11 +3,31 @@ import { MathExp } from "./mathExp"
 import Point from "./Point"
 import FastPriorityQueue from "fastpriorityqueue"
 
+/* マクロ追加手順
+export type move_[name] = ...を追加
+type act_moveに追加
+export type moveTypeに追加
+macroの正規表現を追加
+text2Action
+    allRegsに追加
+    moveTypeNamesに追加
+    switch文にcase [name]:を追加
+matchTo[name]を追加
+
+createFromMacto.tsにて
+function create[name]Framesを追加
+createFramesFromActionのswitch文に追加
+
+createPamphlet.tsにて
+class Pamph_[Name]_Cnvsを追加
+createPamphletのswitch文に追加
+*/
+
 export type action = {
     move: act_move
     count: MathExp.ExpressionTree
 }
-export type act_move = move_break|move_liner|move_back|move_rotate|move_revolve|move_slide|/*move_genRevolve|*/move_dyclon
+export type act_move = move_break|move_liner|move_back|move_rotate|move_revolve|move_slide|/*move_genRevolve|*/move_dyclon|move_sit|move_stand
 export type move_break = {
     type: "break"
 }
@@ -45,7 +65,13 @@ export type move_dyclon = {
     center: Point
     lastRaius: MathExp.ExpressionTree
 }
-export type moveType = "break"|"rotate"|"liner"|"back"|"revolve"|"slide"|"dyclon"
+export type move_sit = {
+    type: "sit"
+}
+export type move_stand = {
+    type: "stand"
+}
+export type moveType = "break"|"rotate"|"liner"|"back"|"revolve"|"slide"|"dyclon"|"sit"|"stand"
 
 export default class Macro {
     protected _macroStr: string = ""
@@ -87,6 +113,8 @@ const _breakReg = /[bi]/
 const _revolveReg = new RegExp(`r([rl])\{(${MathReg.source})\}`)
 const _slideReg = new RegExp(`s\{(${MathReg.source})\}`)
 const _dyclonReg = new RegExp(`dl\{(${MathReg.source})\}`)
+const _sitReg = new RegExp(`sit`)
+const _standReg = new RegExp(`std`)
 
 const linerReg = new RegExp(_linerReg.source + countReg.source,"g")
 const backReg = new RegExp(_backReg.source + countReg.source,"g")
@@ -95,6 +123,8 @@ const rotateReg = new RegExp(`t([rl])\{(${MathReg.source})\}`,"g")
 const revolveReg = new RegExp(_revolveReg.source + countReg.source,"g")
 const slideReg = new RegExp(_slideReg.source + countReg.source,"g")
 const dyclonReg = new RegExp(_dyclonReg.source + countReg.source,"g")
+const sitReg = new RegExp(_sitReg.source + countReg.source,"g")
+const standReg = new RegExp(_standReg.source + countReg.source,"g")
 
 
 function text2Actions(text: string):action[]{
@@ -102,8 +132,8 @@ function text2Actions(text: string):action[]{
     const Q = new FastPriorityQueue<[RegExpExecArray,moveType]>((a,b) => {
         return a[0].index < b[0].index
     })
-    const allRegs = [linerReg,backReg,breakReg,rotateReg,revolveReg,slideReg,dyclonReg]
-    const moveTypeNames:moveType[] = ["liner","back","break","rotate","revolve","slide","dyclon"]
+    const allRegs = [linerReg,backReg,breakReg,rotateReg,revolveReg,slideReg,dyclonReg,sitReg,standReg]
+    const moveTypeNames:moveType[] = ["liner","back","break","rotate","revolve","slide","dyclon","sit","stand"]
     allRegs.forEach((reg,i) => {
         while(1){
             const match = reg.exec(pureText)
@@ -140,6 +170,12 @@ function text2Actions(text: string):action[]{
                 break
             case "dyclon":
                 action = matchToDyclon(match)
+                break
+            case "sit":
+                action = matchToSit()
+                break
+            case "stand":
+                action = matchToStand()
                 break
         }
         if(action === null) break
@@ -261,5 +297,23 @@ function matchToDyclon(match: RegExpExecArray): action|null{
             lastRaius: new MathExp.ExpressionTree(massCanvasDef.dyclonLastR.toString())
         },
         count: count
+    }
+}
+// MEMOカウントをいくつに指定しようが問答無用でカウントは1
+function matchToSit(): action|null{      
+    return {
+        move: {
+            type: "sit"
+        },
+        count: new MathExp.ExpressionTree("1")
+    }
+}
+// MEMOカウントをいくつに指定しようが問答無用でカウントは1
+function matchToStand(): action|null{
+    return {
+        move: {
+            type: "stand"
+        },
+        count: new MathExp.ExpressionTree("1")
     }
 }

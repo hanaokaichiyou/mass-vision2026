@@ -40,7 +40,7 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
         if(person.macroIndex === undefined) return // 上のfilterで除去しているのであり得ないが、vscodeのハイライトの問題
         const macro = scene.macros[person.macroIndex]
         maxCount = Math.max(macro.totalCount(person.variables),maxCount)
-        if(debug === 0) console.log(macro.macroStr,macro.totalCount(person.variables))
+        if(debug === 0) console.log("",macro.macroStr,macro.actions,macro.totalCount(person.variables))
     })
     persons = persons.filter(p => p.macroIndex !== undefined && scene.macros[p.macroIndex].totalCount(p.variables) === maxCount)
 

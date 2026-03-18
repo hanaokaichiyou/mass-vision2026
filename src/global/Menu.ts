@@ -183,7 +183,7 @@ export default async function createMenu(app: App){
     const lockAndRelease = await MenuItem.new({
         id: "lock-release",
         text: app.edit.editField.fixed?"解除":"固定",
-        accelerator: app.edit.editField.fixed?"Ctrl+R":"Ctrl+L",
+        accelerator: app.edit.editField.fixed?"Ctrl+D":"Ctrl+F",
         action: () => {
             if(app.edit.editField.fixed){
                 app.edit.editField.unFixLayer()
@@ -284,12 +284,13 @@ export namespace menuFunctions {
         })
     }
     export const openMusic = async (app: App) => {
-        const src = await openDlg_open_music()
+        const [src,fileName] = await openDlg_open_music()
         if(src === null){
             message("音楽ファイルが正しく読み込まれませんでした。")
             return
         }
         app.musicPlayer.setSrc(src)
+        app.edit.bottomPanel.timeLine.musicBar.setFileName(fileName)
     }
     export const save = (app: App) => {
         const ok = app.scenes.every((scene,i) => {

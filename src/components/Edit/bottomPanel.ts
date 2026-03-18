@@ -10,12 +10,12 @@ export default class BottomPanel extends Narve.Component {
     constructor(){
         super("div",{class: "bottomPanel"})
         this.children.set(this.macroInput,this.timeLine)
-        this.switchFocus(this.timeLine,"flex")
+        this.switchFocus(this.timeLine,"grid")
     }
     async startInputMacro(defaultval: string){
         this.switchFocus(this.macroInput)
         const newMacro = await this.macroInput.startInputMacro(defaultval)
-        this.switchFocus(this.timeLine,"flex")
+        this.switchFocus(this.timeLine,"grid")
         return newMacro
     }
     setScene(scene: Scene,sceneIndex: number){

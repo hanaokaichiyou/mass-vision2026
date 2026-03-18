@@ -9,7 +9,7 @@ import { createFirstFrame } from "../global/CreateFrames";
 import RightPanel from "./Edit/rightPanel";
 import PointDiff from "../global/PointDiff";
 import PersonState from "../global/PersonState";
-import { massCanvasDef as ms } from "../global/massCanvasDef";
+import { massCanvasDef, massCanvasDef as ms } from "../global/massCanvasDef";
 import { UndoFunc } from "../global/Undo";
 import Slide, { Link } from "../global/Slide";
 import { message } from "@tauri-apps/plugin-dialog";
@@ -576,8 +576,8 @@ export default class Edit extends Narve.Component {
         this.leftPanel.setModeDispStr("マクロ適用")
         const persons = await this.startSelectRangePersons(`${reverseFlag?"ダッシュ":""}マクロを適用する範囲を指定してください`)
         this.editField.uiCanvas.clearAll()
-        this.leftPanel.clear()
         if(persons === undefined) return
+        this.leftPanel.clear()
         const newMacroIndex = this.rightPanel.macroEditWindow.getFocusingMacroIndex()
         const person_macroIndex_reverseFlagPair: [Person,number|undefined,boolean][] = persons.map(person => [person,person.macroIndex,person.reverseFlag])
         persons.forEach(person => {
@@ -1309,10 +1309,15 @@ export default class Edit extends Narve.Component {
         const sy = range[0].y
         const ex = range[1].x
         const ey = range[1].y
+        if(Math.abs((ex-sx) * (ey-sy)) <= 4){
+            const person = this.nearestPerson(range[0],massCanvasDef.quarity)[0]
+            if(person === undefined) return []
+            return [person]
+        }
         return this.scene.persons.filter(p => (p.state.pos.x - sx)*(p.state.pos.x - ex) <= 0 && (p.state.pos.y -sy)*(p.state.pos.y - ey) <= 0)
-                .sort((p1,p2) => 
-                    p1.state.pos.sub(range[0]).toDiff().length() - p2.state.pos.sub(range[0]).toDiff().length()
-                )
+            .sort((p1,p2) => 
+                p1.state.pos.sub(range[0]).toDiff().length() - p2.state.pos.sub(range[0]).toDiff().length()
+            )
     }
     // MEMO もしめっちゃ細い平行四辺形にして、二辺が一次独立でなくなると選択されないので注意
     getPersonsInPara(range: [Point,Point,Point]){

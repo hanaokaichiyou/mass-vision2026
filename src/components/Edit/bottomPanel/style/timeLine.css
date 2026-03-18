@@ -1,14 +1,25 @@
 .timeLine{
-    display: block;
+    display: grid;
     flex-direction: column;
-    padding: 1rem;
+    /* padding: 1rem 0px; */
     width: fit-content;
     height: 100%;
     box-sizing: border-box;
+    grid-template: 
+    "slowTitle slowBar"2fr
+    "massTitle massBar"3fr
+    "musicTitle musicBar" 2fr/
+    5rem auto
+    ;
     /* cursor: ew-resize; */
     & > canvas{
+        &.slowBar{
+            grid-area: slowBar;
+            height: 100%;
+        }
         &.massBar{
-            height: 40%;
+            grid-area: massBar;
+            height: 100%;
             cursor: not-allowed;
             &.editable{
                 cursor: grab;
@@ -16,12 +27,10 @@
             &.editting{
                 cursor: grabbing;
             }
-        }
-        &.slowBar{
-            height: 30%;
         }
         &.musicBar{
-            height: 30%;
+            grid-area: musicBar;
+            height: 100%;
             cursor: not-allowed;
             &.editable{
                 cursor: grab;
@@ -29,6 +38,22 @@
             &.editting{
                 cursor: grabbing;
             }
+        }
+    }
+    & > p{
+        margin: 0px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        border-right: 1px solid #888;
+        & .slowTitle{
+            grid-area: slowTitle;
+        }
+        & .massTitle{
+            grid-area: massTitle;
+        }
+        & .musicTitle{
+            grid-area: musicTitle;
         }
     }
 }

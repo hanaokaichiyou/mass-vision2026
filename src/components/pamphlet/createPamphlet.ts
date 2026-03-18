@@ -41,7 +41,7 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[]){
 
                 accCount += count
                 switch(action.move.type){
-                    case "break": return new Pamph_Break_Cnvs(count)
+                    case "break": return new Pamph_Break_Cnvs(count,action.move.text)
                     // TODO　「立ち」のパンフでの表示に困ってる
                     case "liner": return new Pamph_FrontWalk_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)))
                     case "back": return new Pamph_BackWalk_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)))
@@ -116,7 +116,8 @@ function getFirstAction(scene: Scene,id: number){
     if(macro === undefined) return
     let firstAction: action = {
         move: {
-            type: "break"
+            type: "break",
+            text: ""
         },
         count: new MathExp.ExpressionTree("0")
     }
@@ -141,7 +142,8 @@ function getLastAction(scene: Scene,id: number){
     if(macro === undefined) return
     let firstAction: action = {
         move: {
-            type: "break"
+            type: "break",
+            text: ""
         },
         count: new MathExp.ExpressionTree("0")
     }
@@ -168,10 +170,6 @@ class Pamph_FrontWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {
         const center: [number,number] = [80,80]
         this.elem.width = 160
         this.elem.height = 200
-        ctx.strokeStyle = "#000"
-        ctx.lineWidth = 3
-        ctx.arc(...center,70,0,2*Math.PI)
-        ctx.stroke()
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
         ctx.font = "50px sans-serif"
@@ -192,10 +190,6 @@ class Pamph_BackWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {
         const center: [number,number] = [80,80]
         this.elem.width = 160
         this.elem.height = 200
-        ctx.strokeStyle = "#000"
-        ctx.lineWidth = 3
-        ctx.arc(...center,70,0,2*Math.PI)
-        ctx.stroke()
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
         ctx.font = "50px sans-serif"
@@ -211,7 +205,7 @@ class Pamph_BackWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {
     }
 }
 class Pamph_Break_Cnvs extends Narve.Component<HTMLCanvasElement> {
-    constructor(count: number){
+    constructor(count: number,text: string){
         super("canvas",{class: "pamph_break"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
@@ -226,6 +220,8 @@ class Pamph_Break_Cnvs extends Narve.Component<HTMLCanvasElement> {
         ctx.textAlign    = "center"
         ctx.font = "50px sans-serif"
         ctx.fillText(`${count}`,...center)
+        ctx.font = "30px sans-serif"
+        ctx.fillText(text,center[0],170)
     }
 }
 class Pamph_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
@@ -334,7 +330,8 @@ class Pamph_Sit_Cnvs extends Narve.Component<HTMLCanvasElement> {
         ctx.textAlign    = "center"
         ctx.font = `50px sans-serif`
         ctx.fillText(`${count}`,center[0],10 + edgeLen * Math.sqrt(3)/3)
-        ctx.fillText("座り",center[0],160)
+        ctx.font = `30px sans-serif`
+        ctx.fillText("座り",center[0],170)
     }
 }
 class Pamph_Stand_Cnvs extends Narve.Component<HTMLCanvasElement> {
@@ -359,6 +356,7 @@ class Pamph_Stand_Cnvs extends Narve.Component<HTMLCanvasElement> {
         ctx.textAlign    = "center"
         ctx.font = `50px sans-serif`
         ctx.fillText(`${count}`,center[0],10 + edgeLen * Math.sqrt(3)/3)
-        ctx.fillText("立ち",center[0],160)
+        ctx.font = `30px sans-serif`
+        ctx.fillText("立ち",center[0],170)
     }
 }

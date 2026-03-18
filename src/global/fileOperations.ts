@@ -45,7 +45,12 @@ export async function openDlg_write_msvi(saveData: saveData_t) {
     await writeTextFile(selected,JSON.stringify(saveData), { baseDir: BaseDirectory.AppConfig })
   }
 }
-export async function openDlg_open_music(): Promise<string|null>{
+
+/**
+ * 
+ * @returns [URL,fileName]
+ */
+export async function openDlg_open_music(): Promise<[string,string]|[null,null]>{
     const selected = await open({
         multiple: false,
         filters: [
@@ -60,9 +65,10 @@ export async function openDlg_open_music(): Promise<string|null>{
         ],
     })
     if(selected){
+      const s = selected.split(/[\\\/]/)
       const contents_u8 = await readFile(selected, { baseDir: BaseDirectory.AppConfig })
       const blob = new Blob([contents_u8], {type: "application/octet-binary"})
-      return URL.createObjectURL(blob)
+      return [URL.createObjectURL(blob),s[s.length-1]]
     }
-    return selected
+    return [null,null]
 }

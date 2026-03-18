@@ -1,4 +1,4 @@
-import { Narve } from "narve";
+import { Narve, nr } from "narve";
 import MassBar from "./timeLine/massBar";
 import "./style/timeLine.css"
 import SlowBar from "./timeLine/slowBar";
@@ -18,10 +18,14 @@ export default class TimeLine extends Narve.Component {
     massBar = new MassBar(this)
     musicBar = new MusicBar(this)
 
+    slowTitle = nr("p",{class: "slowTitle"},"スロー")
+    massTitle = nr("p",{class: "massTitle"},"カウント")
+    musicTitle = nr("p",{class: "musicTitle"},"音楽")
+
     isStartCountEditable = false
     constructor(){
         super("div",{class: "timeLine"})
-        this.children.set(this.slowBar,this.massBar,this.musicBar)
+        this.children.set(this.slowTitle,this.massTitle,this.musicTitle,this.slowBar,this.massBar,this.musicBar)
 
         this.massBar.onMassStartCountChanged = massStartCount => {
             const tempStartCounts = {

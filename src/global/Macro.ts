@@ -30,6 +30,7 @@ export type action = {
 export type act_move = move_break|move_liner|move_back|move_rotate|move_revolve|move_slide|/*move_genRevolve|*/move_dyclon|move_sit|move_stand
 export type move_break = {
     type: "break"
+    text: string
 }
 export type move_liner = {
     type: "liner"
@@ -107,9 +108,11 @@ export default class Macro {
 // MEMO ダイクロン左回転しかできません。ごめん…
 const MathReg = new RegExp(`(?:${MathExp.expReg.source})+`)
 const countReg = new RegExp(`\\[(${MathReg.source})\\]`);// /\[(\d+)\]/
+const textReg = new RegExp(/[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠ー0-9a-zA-Z]*/)
+
 const _linerReg = new RegExp(`f(?:\{(${MathReg.source})\})?`)
 const _backReg = new RegExp(`bw(?:\{(${MathReg.source})\})?`)
-const _breakReg = /[bi]/
+const _breakReg = new RegExp(`b(?:\{(${textReg.source})\})?`)
 const _revolveReg = new RegExp(`r([rl])\{(${MathReg.source})\}`)
 const _slideReg = new RegExp(`s\{(${MathReg.source})\}`)
 const _dyclonReg = new RegExp(`dl\{(${MathReg.source})\}`)
@@ -185,12 +188,14 @@ function text2Actions(text: string):action[]{
 }
 
 function matchToBreak(match: RegExpExecArray): action|null{
-    if(match[1] === undefined) return null
+    if(match[2] === undefined) return null
+    if(match[1] === undefined) match[1] = ""
     try{
-        const count = new MathExp.ExpressionTree(match[1])
+        const count = new MathExp.ExpressionTree(match[2])
         return {
             move: {
-                type: "break"
+                type: "break",
+                text: match[1]
             },
             count: count
         }

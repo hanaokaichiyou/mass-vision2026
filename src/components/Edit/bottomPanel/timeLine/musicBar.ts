@@ -10,6 +10,7 @@ export default class MusicBar extends Narve.Component<HTMLCanvasElement> {
 
     grabStartCount: number|null = null
 
+    fileName: string|null = null
     parent: TimeLine
     constructor(parent: TimeLine){
         super("canvas",{class: "musicBar"})
@@ -20,6 +21,10 @@ export default class MusicBar extends Narve.Component<HTMLCanvasElement> {
         this.elem.onmousedown = e => this.onMouseDown(e)
         this.elem.onmousemove = e => this.onMouseMove(e)
         this.elem.onmouseout = this.elem.onmouseup = e => this.onMouseUp(e)
+    }
+    setFileName(fileName: string){
+        this.fileName = fileName
+        this.renderBar()
     }
     reload(startCounts: StartCounts = this.parent.startCounts){
         this.setCountAndResize(this.count,startCounts.massStartCount)
@@ -52,6 +57,13 @@ export default class MusicBar extends Narve.Component<HTMLCanvasElement> {
         this.ctx.beginPath()
         this.ctx.clearRect(0,0,this.Width,this.Height)
         this.ctx.fillRect(musicStartCount * gap,0,this.Width,this.Height) // Widthを使うことで右限界まで塗れる
+        if(this.fileName !== null){
+            this.ctx.font = "12px sans-serif"
+            this.ctx.textAlign = "left"
+            this.ctx.textBaseline = "middle"
+            this.ctx.fillStyle = "#fff"
+            this.ctx.fillText(this.fileName,musicStartCount * gap,this.Height/2)
+        }
     }
     onMouseDown(e: MouseEvent){
         if(!this.parent.isStartCountEditable) return

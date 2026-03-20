@@ -339,8 +339,8 @@ export default class Edit extends Narve.Component {
         this.leftPanel.setModeDispStr("削除")
         const persons = await this.startSelectRangePersons("削除したい範囲を指定してください")
         this.editField.uiCanvas.clearAll()
-        this.leftPanel.clear()
         if(persons === undefined) return false
+        this.leftPanel.clear()
         this.removePersons(...persons)
         this.drawFirstFrame()
         this.pushUndo({
@@ -397,8 +397,8 @@ export default class Edit extends Narve.Component {
         if(base === null) return false
         const persons = await this.startSelectRangePersons("適用範囲を選択してください")
         this.editField.uiCanvas.clearAll()
-        this.leftPanel.clear()
         if(persons === undefined) return false
+        this.leftPanel.clear()
         const befPos: [Person,Point][] = this.scene.persons.map(person => [person,person.startState.pos.clone()])
         persons.forEach(person => {
             person.startState.pos = person.startState.pos.nearestGrid(base)
@@ -463,7 +463,7 @@ export default class Edit extends Narve.Component {
         this.leftPanel.setModeDispStr(cutAndPaste?"切り取り":"コピー")
         const persons = await this.startSelectRangePersons("人を選択してください")
         this.editField.uiCanvas.clearAll()
-        if(persons === undefined) return
+        if(persons === undefined) return false
         persons.forEach(person => this.editField.uiCanvas.drawSelect(person.state.pos))
         const basePerson = persons.reduce((base,person) => {
             if(base.startState.pos.x < person.startState.pos.x) return base
@@ -576,7 +576,7 @@ export default class Edit extends Narve.Component {
         this.leftPanel.setModeDispStr("マクロ適用")
         const persons = await this.startSelectRangePersons(`${reverseFlag?"ダッシュ":""}マクロを適用する範囲を指定してください`)
         this.editField.uiCanvas.clearAll()
-        if(persons === undefined) return
+        if(persons === undefined) return false
         this.leftPanel.clear()
         const newMacroIndex = this.rightPanel.macroEditWindow.getFocusingMacroIndex()
         const person_macroIndex_reverseFlagPair: [Person,number|undefined,boolean][] = persons.map(person => [person,person.macroIndex,person.reverseFlag])
@@ -617,8 +617,8 @@ export default class Edit extends Narve.Component {
         this.leftPanel.setModeDispStr("変数適用")
         const persons = await this.startSelectRangePersons("変数を適用する範囲を指定してください")
         this.editField.uiCanvas.clearAll()
+        if(persons === undefined) return false
         this.leftPanel.clear()
-        if(persons === undefined) return
         const person_varsPair: [Person,ms.Variables][] = persons.map(person => [person,person.variables])
         persons.forEach((person,i) => {
             person.variables[varName] = value + inc*i
@@ -654,7 +654,7 @@ export default class Edit extends Narve.Component {
     async startPointDeployDest(){
         const index = this.rightPanel.slideEditWindow.slideIndexSelect.elem.selectedIndex
         const slide = this.scene.slides[index]
-        if(slide === undefined) return
+        if(slide === undefined) return false
         this.editField.uiCanvas.cancel()
         this.editField.uiCanvas.drawSlide(slide)
         this.leftPanel.clear()
@@ -886,7 +886,7 @@ export default class Edit extends Narve.Component {
     async startRemoveDest(){
         const index = this.rightPanel.slideEditWindow.slideIndexSelect.elem.selectedIndex
         const slide = this.scene.slides[index]
-        if(slide === undefined) return
+        if(slide === undefined) return false
 
         this.editField.uiCanvas.cancel()
         this.editField.uiCanvas.drawSlide(slide)
@@ -898,8 +898,8 @@ export default class Edit extends Narve.Component {
         }
         const links = await this.startSelectRangeDests("削除したい範囲を指定してください",f,f)
         this.editField.uiCanvas.clearAll()
+        if(links === undefined) return false
         this.leftPanel.clear()
-        if(links.length === 0) return true
         this.removeLinks(slide,...links)
         this.editField.uiCanvas.drawSlide(slide)
         this.pushUndo({
@@ -932,6 +932,7 @@ export default class Edit extends Narve.Component {
             this.editField.uiCanvas.drawSlide(slide)
         }
         const links = await this.startSelectRangeDests("適用範囲を選択してください",f,f)
+        if(links === undefined) return false
         const befPos: [Link,Point][] = slide.links.map(link => [link,link.absPos.clone()])
         links.forEach(link => {
             link.absPos = link.absPos.nearestGrid(base)
@@ -967,6 +968,7 @@ export default class Edit extends Narve.Component {
         const dests = await this.startSelectRangeDests("対称にコピーする目的地を選択してください",() => {
             this.editField.uiCanvas.drawSlide(slide)
         })
+        if(dests === undefined) return
         const newPoses = dests.map(link => link.absPos.toSymmetry(theta,ms.centerPx))
 
         this.pushUndoAddNewDests(slide,...this.addNewDests(slide,...newPoses))
@@ -987,6 +989,7 @@ export default class Edit extends Narve.Component {
         const links = await this.startSelectRangeDests("対称にコピーする目的地を選択してください",() => {
             this.editField.uiCanvas.drawSlide(slide)
         })
+        if(links === undefined) return
         const newPoses = links.map(link => link.absPos.toSymmetry(90,ms.centerPx).toSymmetry(0,ms.centerPx))
         this.pushUndoAddNewDests(slide,...this.addNewDests(slide,...newPoses))
         this.editField.uiCanvas.clearAll()
@@ -1007,6 +1010,7 @@ export default class Edit extends Narve.Component {
         const links = await this.startSelectRangeDests("対称にコピーする目的地を選択してください",() => {
             this.editField.uiCanvas.drawSlide(slide)
         })
+        if(links === undefined) return
         const newPoses = links.map(link => link.absPos.toRevolved(theta,ms.centerPx))
         this.pushUndoAddNewDests(slide,...this.addNewDests(slide,...newPoses))
         this.editField.uiCanvas.clearAll()
@@ -1028,6 +1032,7 @@ export default class Edit extends Narve.Component {
         }
         const links = await this.startSelectRangeDests("目的地を選択してください",f,f)
         this.editField.uiCanvas.clearAll()
+        if(links === undefined) return false
         this.editField.uiCanvas.drawSlide(slide)
         links.forEach(link => this.editField.uiCanvas.drawSelect(link.absPos))
         // 左上探し
@@ -1131,8 +1136,8 @@ export default class Edit extends Narve.Component {
         this.leftPanel.clear()
         const persons = await this.startSelectRangePersons("色分けを適用する範囲を指定してください")
         this.editField.uiCanvas.clearAll()
+        if(persons === undefined) return false
         this.leftPanel.clear()
-        if(persons === undefined) return true
         const person_colorPair: [Person,number][] = persons.map(person => [person,person.colorIndex])
         const colorIndex = this.rightPanel.setColorIndexWindow.getColorIndex()
         persons.forEach(person => {
@@ -1210,7 +1215,7 @@ export default class Edit extends Narve.Component {
             this.leftPanel.cancel = () => resolve(undefined)
         })
     }
-    startSelectRangeDests(order: string,onRectRangeChange?: (p:[Point,Point]) => any,onParaRangeChange?: (p:[Point,Point,Point]) => any): Promise<Link[]>{
+    startSelectRangeDests(order: string,onRectRangeChange?: (p:[Point,Point]) => any,onParaRangeChange?: (p:[Point,Point,Point]) => any): Promise<Link[]|undefined>{
         this.leftPanel.clear()
         this.leftPanel.order(order)
         const clearEvents = () => {
@@ -1239,6 +1244,7 @@ export default class Edit extends Narve.Component {
                 resolve(dests)
             }
             this.leftPanel.dispRangeSelect()
+            this.leftPanel.cancel = () => resolve(undefined)
         })
     }
     resetId(targetSceneIndex: number){

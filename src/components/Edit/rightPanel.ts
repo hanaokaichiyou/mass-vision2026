@@ -44,6 +44,7 @@ export default class RightPanel extends Narve.Component {
         super("div",{class: "rightPanel"})
         this.parent = parent
         this.children.set(this.rootBackBtn,this.windows)
+        this.parent.leftPanel.clear()
         this.windows.switchFocus(this.rootMenu)
 
         this.rootBackBtn.elem.onclick =
@@ -58,31 +59,53 @@ export default class RightPanel extends Narve.Component {
             e.stopPropagation()
             e.preventDefault()
             this.cancelAll()
+            this.parent.leftPanel.clear()
             this.windows.switchFocus(this.rootMenu)
         }
 
-        this.rootMenu.deployBtn.elem.onclick = () => this.windows.switchFocus(this.deployBtns)
+        this.rootMenu.deployBtn.elem.onclick = () => {
+            this.parent.leftPanel.clear()
+            this.windows.switchFocus(this.deployBtns)
+        }
         // 初期方向設定はleftPanelに指示を出すだけで画面遷移がないのでEdit.tsで記述されている
         // 特殊初期方向設定も同様
-        this.rootMenu.statusCheckBtn.elem.onclick = () => this.windows.switchFocus(this.statusCheckWindow)
+        this.rootMenu.statusCheckBtn.elem.onclick = () => {
+            this.parent.leftPanel.clear()
+            this.windows.switchFocus(this.statusCheckWindow)
+        }
         this.rootMenu.macroEditBtn.elem.onclick = () => {
+            this.parent.leftPanel.clear()
             this.windows.switchFocus(this.macroEditWindow)
             this.macroEditWindow.setMacroIndex(0)
         }
         this.rootMenu.slideEditBtn.elem.onclick = () => {
+            this.parent.leftPanel.clear()
             this.windows.switchFocus(this.slideEditWindow)
             this.slideEditWindow.setSlideIndex(0)
         }
-        this.rootMenu.colorIndexBtn.elem.onclick = () => this.windows.switchFocus(this.setColorIndexWindow)
-        this.rootMenu.idBtn.elem.onclick = () => this.windows.switchFocus(this.idWindow)
-        this.rootMenu.pamphSettingBtn.elem.onclick = () => this.windows.switchFocus(this.pamphSettings)
-        this.rootMenu.varsSettingsBtn.elem.onclick = () => this.windows.switchFocus(this.varsSettings)
+        this.rootMenu.colorIndexBtn.elem.onclick = () => {
+            this.parent.leftPanel.clear()
+            this.windows.switchFocus(this.setColorIndexWindow)
+        }
+        this.rootMenu.idBtn.elem.onclick = () => {
+            this.parent.leftPanel.clear()
+            this.windows.switchFocus(this.idWindow)
+        }
+        this.rootMenu.pamphSettingBtn.elem.onclick = () => {
+            this.parent.leftPanel.clear()
+            this.windows.switchFocus(this.pamphSettings)
+        }
+        this.rootMenu.varsSettingsBtn.elem.onclick = () => {
+            this.parent.leftPanel.clear()
+            this.windows.switchFocus(this.varsSettings)
+        }
 
         setNumKeyOperations([() => {this.rootBackBtn.elem.focus()}])
     }
     setScene(scene: Scene){
         this.macroEditWindow.setScene(scene)
         this.slideEditWindow.setScene(scene)
+        this.parent.leftPanel.clear()
         this.windows.switchFocus(this.rootMenu)
     }
     cancelAll(){

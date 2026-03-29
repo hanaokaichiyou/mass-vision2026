@@ -2,19 +2,22 @@ import { Narve, nr } from "narve";
 import BackCanvas from "../canvas/backCanvas";
 import PersonsCanvas from "../canvas/personsCanvas";
 import UICanvas from "../canvas/UICanvas";
+import ZoomCanvas from "../canvas/zoomCanvas";
 
 export default class EditField extends Narve.Component {
     backCanvas = new BackCanvas()
     personsCanvas = new PersonsCanvas()
-    uiCanvas = new UICanvas()
+    uiCanvas = new UICanvas(this)
+    zoomCanvas = new ZoomCanvas(this)
 
     fixed = false
     layer: Narve.Component
     constructor(){
         super("div",{class: "editField"})
-        this.layer = nr("div",{class: "canvasLayer"},this.backCanvas,this.personsCanvas,this.uiCanvas)
+        this.layer = nr("div",{class: "canvasLayer"},this.backCanvas,this.personsCanvas,this.zoomCanvas,this.uiCanvas,)
         this.children.set(this.layer)
-        this.backCanvas.drawGrid()        
+        this.backCanvas.drawGrid()       
+        // FROM キーボードショートカットを拡大に割り当て、拡大をx3にしたか確認する 
     }
     fixLayerCenter(){
         const centerX = this.backCanvas.elem.getBoundingClientRect().width/2

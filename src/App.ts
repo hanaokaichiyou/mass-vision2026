@@ -353,7 +353,8 @@ export default class App extends Narve.Component {
         this.edit.bottomPanel.hide()
         this.edit.editField.uiCanvas.cancel()
         this.edit.editField.uiCanvas.clearAll()
-        
+        const zoomable = this.edit.editField.zoomCanvas.zoomable
+        this.edit.editField.zoomCanvas.unZoomable()
         
         if(isAutoPlay){
             console.log("autoPlay")
@@ -393,6 +394,7 @@ export default class App extends Narve.Component {
         this.edit.rightPanel.display()
         this.edit.leftPanel.display()
         this.edit.bottomPanel.display()
+        this.edit.editField.zoomCanvas.zoomable = zoomable
     }
     // async manualPlay(startSceneNum?: number){
     //     if(this.playing){

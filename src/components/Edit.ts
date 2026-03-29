@@ -122,9 +122,9 @@ export default class Edit extends Narve.Component {
         this.onSceneChanged(scene,sceneIndex)
     }
     onSceneChanged(scene: Scene, sceneNum: number){
-        scene;
         this.topPanel.sceneStateDisp.setSceneIndex(sceneNum)
         this.topPanel.sceneStateDisp.setCountNum(0)
+        this.editField.zoomCanvas.scene = scene        
     }
     // deploy
     // MEMO inputとかselectとかに前回の入力情報残るかも。ごめん

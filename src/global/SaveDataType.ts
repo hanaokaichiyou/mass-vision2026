@@ -1,5 +1,3 @@
-import PamphSettings from "../components/Edit/rightPanel/pamphSettings"
-
 export type saveData_t = {
     scenes: saveDataScene_t[]
     pamphSettings?: saveDataPamphSettings_t
@@ -170,7 +168,7 @@ function isSaveDataPoint(value: any): value is saveDataPoint_t {
         typeof value.y === "number"
     );
 }
-function isPamphSettings(data: any): data is PamphSettings {
+function isPamphSettings(data: any): data is saveDataPamphSettings_t {
     return Array.isArray(data.colorFills) && (data.colorFills as []).every(item => typeof item === 'boolean');
 }
 function isSaveDataSlowSegments(value: any): value is saveDataSlowSegments_t {

@@ -4,19 +4,34 @@ import MassCanvas from "./massCanvas";
 import PersonState from "../../global/PersonState";
 import Person from "../../global/Person";
 import Slide from "../../global/Slide";
+import EditField from "../Edit/EditField";
 
 
 export default class UICanvas extends MassCanvas {
-    constructor(){
+    parent: EditField
+    constructor(parent: EditField){
         super()
+        this.parent = parent
         this.elem.classList.add("uiCanvas")
+        this.elem.onmousedown = e => {
+            this.onMouseDown(e)
+            parent.zoomCanvas.onMouseDown(e)
+        }
+        this.elem.onmousemove = e => {
+            this.onMouseMove(e)
+            parent.zoomCanvas.onMouseMove(e)
+        }
+        this.elem.onmouseout = e => {
+            this.onMouseOut(e)
+            parent.zoomCanvas.onMouseOut(e)
+        }
     }
 
     getAccuratePoint(mouseMoveCustom?: (point: Point) => any): Promise<Point|null>{
         return new Promise(resolve => {
             let dullClickStart: Point|null = null
-            this.elem.onmousedown = (e) => dullClickStart = this.offsetToPoint(e)
-            this.elem.onmousemove = (e) => {
+            this.onMouseDown = e => dullClickStart = this.offsetToPoint(e)
+            this.onMouseMove = (e) => {
                 this.clearAll()
                 this.ondullmousemove(e,dullClickStart)
                 console.log("custom")
@@ -26,7 +41,7 @@ export default class UICanvas extends MassCanvas {
                     mouseMoveCustom?.(this.offsetToPoint(e))
                 }
             }
-            this.elem.onmouseup   = this.elem.onmouseout
+            this.elem.onmouseup   = this.onMouseOut
                                   = (e) => {
                 this.clearAll()
                 mouseMoveCustom?.(this.offsetToPoint(e))
@@ -85,7 +100,7 @@ export default class UICanvas extends MassCanvas {
         return new Promise(resolve => {
             if(mouseMoveCustom != undefined){
                 this.clearAll()
-                this.elem.onmousemove = (e) => {
+                this.onMouseMove = (e) => {
                     mouseMoveCustom(this.offsetToPoint(e))
                 }
             }
@@ -103,15 +118,15 @@ export default class UICanvas extends MassCanvas {
     getRect(onRangeChange?: (p:[Point,Point])=>any): Promise<[Point,Point]|null>{
         return new Promise(resolve => {
             let dragStart: Point|null = null
-            this.elem.onmousedown = (e) => dragStart = this.offsetToPoint(e)
-            this.elem.onmousemove = (e) => {
+            this.onMouseDown = e => dragStart = this.offsetToPoint(e)
+            this.onMouseMove = (e) => {
                 if(dragStart !== null){
                     this.clearAll()
                     onRangeChange?.([dragStart,this.offsetToPoint(e)])
                     this.drawRect(dragStart,this.offsetToPoint(e))
                 }
             }
-            this.elem.onmouseup   = this.elem.onmouseout
+            this.elem.onmouseup   = this.onMouseOut
                                   = (e) => {
                 if(dragStart !== null){
                     resolve([dragStart,this.offsetToPoint(e)])
@@ -128,15 +143,15 @@ export default class UICanvas extends MassCanvas {
     getCircle(onRangeChange?: (p:[Point,Point])=>any): Promise<[Point,Point]|null>{
         return new Promise(resolve => {
             let dragStart: Point|null = null
-            this.elem.onmousedown = (e) => dragStart = this.offsetToPoint(e)
-            this.elem.onmousemove = (e) => {
+            this.onMouseDown = e => dragStart = this.offsetToPoint(e)
+            this.onMouseMove = (e) => {
                 if(dragStart !== null){
                     this.clearAll()
                     onRangeChange?.([dragStart,this.offsetToPoint(e)])
                     this.drawCircle(dragStart,this.offsetToPoint(e))
                 }
             }
-            this.elem.onmouseup   = this.elem.onmouseout
+            this.elem.onmouseup   = this.onMouseOut
                                   = (e) => {
                 if(dragStart !== null){
                     resolve([dragStart,this.offsetToPoint(e)])
@@ -153,15 +168,15 @@ export default class UICanvas extends MassCanvas {
     async getPara(onRangeChange?: (p:[Point,Point,Point])=>any): Promise<[Point,Point,Point]|null>{
         const [point1,point2] = await new Promise<[Point|null,Point|null]>(resolve => {
             let point1: Point|null = null
-            this.elem.onmousedown = (e) => point1 = this.offsetToPoint(e)
-            this.elem.onmousemove = (e) => {
+            this.onMouseDown = e => point1 = this.offsetToPoint(e)
+            this.onMouseMove = (e) => {
                 if(point1 !== null){
                     this.clearAll()
                     onRangeChange?.([point1,this.offsetToPoint(e),this.offsetToPoint(e)])
                     this.drawLine(point1,this.offsetToPoint(e))
                 }
             }
-            this.elem.onmouseup   = this.elem.onmouseout
+            this.elem.onmouseup   = this.onMouseOut
                                   = (e) => {
                 if(point1 !== null){
                     resolve([point1,this.offsetToPoint(e)])
@@ -356,7 +371,10 @@ export default class UICanvas extends MassCanvas {
     }
 
     protected clearEvents(){
-        this.elem.onmousedown = this.elem.onmouseup = this.elem.onmousemove = this.elem.onmouseout = () => {}
+        this.onMouseDown = this.elem.onmouseup = this.onMouseMove = this.onMouseOut = () => {}
     }
+    onMouseMove(e: MouseEvent){e}
+    onMouseDown(e: MouseEvent){e}
+    onMouseOut(e: MouseEvent){e}
     onHoveringPointChanged(pos: Point){pos}
 }

@@ -10,7 +10,7 @@ export default class PersonsCanvas extends MassCanvas {
         super()
     }
     
-    plot(state: PersonState,colorIndex: number){
+    plot(state: PersonState,colorIndex: number,dispNumber?: number){
         if(this.ctx === null) return
         const r = massCanvasDef.personMarkerR
 
@@ -26,6 +26,13 @@ export default class PersonsCanvas extends MassCanvas {
         this.ctx.moveTo(...state.pos.getPair())
         this.ctx.arc(...state.pos.getPair(),r,0,2*Math.PI)
         this.ctx.fill()
+        if(dispNumber !== undefined){
+            this.ctx.textAlign = "center"
+            this.ctx.textBaseline = "middle"
+            this.ctx.font = `${this.quarity / 3}px sans-serif`
+            this.ctx.fillStyle = "#000"
+            this.ctx.fillText(dispNumber.toString(),...state.pos.getPair())
+        }
     }
     plotAll(){
         
@@ -34,7 +41,7 @@ export default class PersonsCanvas extends MassCanvas {
         this.clearAll()
         frame.forEach(({state,person}) => {
             person.state = state.clone()
-            this.plot(state,person.colorIndex)
+            this.plot(state,person.colorIndex,person.id)
         })
     }
     

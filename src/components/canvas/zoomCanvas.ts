@@ -16,36 +16,55 @@ export default class ZoomCanvas extends MassCanvas {
     constructor(parent: EditField){
         super()
         this.parent = parent
-        this.elem.onmousemove = e => this.onMouseMove(e)
-        this.elem.onmouseout = e => this.onMouseOut(e)
-        this.elem.onmousedown = e => this.onMouseDown(e)
+        this.elem.onmousedown = e => {
+            this.onMouseDown(e)
+            if(e.button === 0) parent.uiCanvas.onMouseDown(e)
+        }
+        this.elem.onmousemove = e => {
+            this.onMouseMove(e)
+            parent.uiCanvas.onMouseMove(e)
+        }
+        this.elem.onmouseout = e => {
+            this.onMouseOut(e)
+            parent.uiCanvas.onMouseOut(e)
+        }
+        this.elem.onmouseup = e => {
+            this.onMouseUp(e)
+            parent.uiCanvas.onMouseUp(e)
+        }
     }
     drawZoom(centerPoint: Point){
         if(this.ctx === null) return
         if(this.parent.backCanvas.ctx === null) return
+        if(this.parent.uiCanvas.ctx === null) return
+        if(this.scene === null) return
         const diff = new PointDiff(this.ZOOM_RECT_W,this.ZOOM_RECT_H)
+
+        // 枠
         this.ctx.strokeStyle = "#fff"
         this.ctx.lineWidth = this.quarity/2
         this.ctx.strokeRect(...centerPoint.sub(diff.mul(1/2)).getPair(),...diff.getPair())
         
+        // 背景
         this.ctx.fillStyle = massCanvasDef.backGroundColor
         this.ctx.fillRect(...centerPoint.sub(diff.mul(1/2)).getPair(),...diff.getPair())
 
-        const imgData = this.parent.backCanvas.ctx.getImageData(...centerPoint.sub(diff.mul(1/(2*this.zoomLevel))).getPair(),...diff.mul(1/this.zoomLevel).getPair())
-
-        const zoomedImgData = new ImageData(...diff.getPair())
-        for(let y = 0; y < imgData.height; y++) for(let x = 0;x < imgData.width; x++){
-            const idx = (y * imgData.width + x) * 4;
+        // backCanvasの転写
+        const backImgData = this.parent.backCanvas.ctx.getImageData(...centerPoint.sub(diff.mul(1/(2*this.zoomLevel))).getPair(),...diff.mul(1/this.zoomLevel).getPair())
+        const backZoomedImgData = new ImageData(...diff.getPair())
+        for(let y = 0; y < backImgData.height; y++) for(let x = 0;x < backImgData.width; x++){
+            const idx = (y * backImgData.width + x) * 4;
+            if(backImgData.data[idx+3] === 0) continue
             for(let i = 0;i < this.zoomLevel;i++) for(let j = 0;j < this.zoomLevel;j++){
                 const zoomedY = y * this.zoomLevel + i
                 const zoomedX = x * this.zoomLevel + j
-                const zoomedIdx = (zoomedY * zoomedImgData.width + zoomedX) * 4
-                for(let e = 0; e < 4;e++) zoomedImgData.data[zoomedIdx + e] = imgData.data[idx+e]
+                const zoomedIdx = (zoomedY * backZoomedImgData.width + zoomedX) * 4
+                for(let e = 0; e < 4;e++) backZoomedImgData.data[zoomedIdx + e] = backImgData.data[idx+e]
             }
         }
-        this.ctx.putImageData(zoomedImgData,...centerPoint.sub(diff.mul(1/2)).getPair())
+        this.ctx.putImageData(backZoomedImgData,...centerPoint.sub(diff.mul(1/2)).getPair())
         
-        if(this.scene === null) return
+        // personsCanvasの転写
         const left = centerPoint.x - diff.x/(2*this.zoomLevel)
         const right = centerPoint.x + diff.x/(2*this.zoomLevel)
         const top = centerPoint.y - diff.y/(2*this.zoomLevel)
@@ -63,6 +82,22 @@ export default class ZoomCanvas extends MassCanvas {
                 )
             }
         })
+
+        // UICanvasの転写と
+        const zoomImgData = this.ctx.getImageData(...centerPoint.sub(diff.mul(1/2)).getPair(),...diff.getPair())
+        const UIImgData = this.parent.uiCanvas.ctx.getImageData(...centerPoint.sub(diff.mul(1/(2*this.zoomLevel))).getPair(),...diff.mul(1/this.zoomLevel).getPair())
+        // const UIZoomedImgData = new ImageData(...diff.getPair())
+        for(let y = 0; y < UIImgData.height; y++) for(let x = 0;x < UIImgData.width; x++){
+            const idx = (y * UIImgData.width + x) * 4
+            if(UIImgData.data[idx+3] === 0) continue
+            for(let i = 0;i < this.zoomLevel;i++) for(let j = 0;j < this.zoomLevel;j++){
+                const zoomedY = y * this.zoomLevel + i
+                const zoomedX = x * this.zoomLevel + j
+                const zoomedIdx = (zoomedY * zoomImgData.width + zoomedX) * 4
+                for(let e = 0; e < 4;e++) zoomImgData.data[zoomedIdx + e] = UIImgData.data[idx+e]
+            }
+        }
+        this.ctx.putImageData(zoomImgData,...centerPoint.sub(diff.mul(1/2)).getPair())
     }
     plotAperson(pos: Point, rotateAngle: number,colorIndex: number,dispNumber?: number){
         if(this.ctx === null) return
@@ -92,6 +127,7 @@ export default class ZoomCanvas extends MassCanvas {
         this.clearAll()
         if(this.zoomable){
             const point = this.offsetToPoint(e)
+            // this.clearAll()
             this.drawZoom(point)
         }
     }
@@ -104,6 +140,7 @@ export default class ZoomCanvas extends MassCanvas {
         e
         this.clearAll()
     }
+    onMouseUp(e: MouseEvent){e}
     toggleZoomable(){
         this.zoomable = !this.zoomable
         this.clearAll()

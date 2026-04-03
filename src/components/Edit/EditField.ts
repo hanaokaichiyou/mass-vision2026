@@ -14,10 +14,9 @@ export default class EditField extends Narve.Component {
     layer: Narve.Component
     constructor(){
         super("div",{class: "editField"})
-        this.layer = nr("div",{class: "canvasLayer"},this.backCanvas,this.personsCanvas,this.zoomCanvas,this.uiCanvas,)
+        this.layer = nr("div",{class: "canvasLayer"},this.backCanvas,this.personsCanvas,this.uiCanvas,this.zoomCanvas,)
         this.children.set(this.layer)
-        this.backCanvas.drawGrid()       
-        // FROM キーボードショートカットを拡大に割り当て、拡大をx3にしたか確認する 
+        this.backCanvas.drawGrid()
     }
     fixLayerCenter(){
         const centerX = this.backCanvas.elem.getBoundingClientRect().width/2

@@ -14,7 +14,7 @@ export default class UICanvas extends MassCanvas {
         this.parent = parent
         this.elem.classList.add("uiCanvas")
         this.elem.onmousedown = e => {
-            this.onMouseDown(e)
+            if(e.button === 0) this.onMouseDown(e)
             parent.zoomCanvas.onMouseDown(e)
         }
         this.elem.onmousemove = e => {
@@ -25,6 +25,9 @@ export default class UICanvas extends MassCanvas {
             this.onMouseOut(e)
             parent.zoomCanvas.onMouseOut(e)
         }
+        this.elem.onmouseup = e => {
+            this.onMouseUp(e)
+        }
     }
 
     getAccuratePoint(mouseMoveCustom?: (point: Point) => any): Promise<Point|null>{
@@ -34,14 +37,13 @@ export default class UICanvas extends MassCanvas {
             this.onMouseMove = (e) => {
                 this.clearAll()
                 this.ondullmousemove(e,dullClickStart)
-                console.log("custom")
                 if(dullClickStart !== null){
                     mouseMoveCustom?.(this.calcDullMousePos(dullClickStart,this.offsetToPoint(e)))
                 }else{
                     mouseMoveCustom?.(this.offsetToPoint(e))
                 }
             }
-            this.elem.onmouseup   = this.onMouseOut
+            this.onMouseUp = this.onMouseOut
                                   = (e) => {
                 this.clearAll()
                 mouseMoveCustom?.(this.offsetToPoint(e))
@@ -104,7 +106,7 @@ export default class UICanvas extends MassCanvas {
                     mouseMoveCustom(this.offsetToPoint(e))
                 }
             }
-            this.elem.onmouseup = (e) => {
+            this.onMouseUp = (e) => {
                 resolve(this.offsetToPoint(e))
                 this.clearEvents()
             }
@@ -126,7 +128,7 @@ export default class UICanvas extends MassCanvas {
                     this.drawRect(dragStart,this.offsetToPoint(e))
                 }
             }
-            this.elem.onmouseup   = this.onMouseOut
+            this.onMouseUp   = this.onMouseOut
                                   = (e) => {
                 if(dragStart !== null){
                     resolve([dragStart,this.offsetToPoint(e)])
@@ -151,7 +153,7 @@ export default class UICanvas extends MassCanvas {
                     this.drawCircle(dragStart,this.offsetToPoint(e))
                 }
             }
-            this.elem.onmouseup   = this.onMouseOut
+            this.onMouseUp   = this.onMouseOut
                                   = (e) => {
                 if(dragStart !== null){
                     resolve([dragStart,this.offsetToPoint(e)])
@@ -176,7 +178,7 @@ export default class UICanvas extends MassCanvas {
                     this.drawLine(point1,this.offsetToPoint(e))
                 }
             }
-            this.elem.onmouseup   = this.onMouseOut
+            this.onMouseUp = this.onMouseOut
                                   = (e) => {
                 if(point1 !== null){
                     resolve([point1,this.offsetToPoint(e)])
@@ -315,6 +317,14 @@ export default class UICanvas extends MassCanvas {
 
         if(bigIndex) this.ctx.fill()
         else this.ctx.stroke()
+
+        if(macroIndex !== undefined){
+            this.ctx.textAlign = "center"
+            this.ctx.textBaseline = "middle"
+            this.ctx.font = `${this.quarity / 3}px sans-serif`
+            this.ctx.fillStyle = "#000"
+            this.ctx.fillText((macroIndex+1).toString(),...pos.getPair())
+        }
     }
     drawPersonsMacroMarkers(persons: Person[]){
         this.clearAll()
@@ -326,7 +336,7 @@ export default class UICanvas extends MassCanvas {
     drawPersonsVarMarkers(persons: Person[], varName: ms.VariableName){
         this.clearAll()
         persons.forEach(person => {
-            this.drawMacroMarker(person.state.pos,person.variables[varName],person.reverseFlag)
+            this.drawMacroMarker(person.state.pos,person.variables[varName]-1,person.reverseFlag)
         })
     }
     drawSelect(pos: Point){
@@ -371,10 +381,12 @@ export default class UICanvas extends MassCanvas {
     }
 
     protected clearEvents(){
-        this.onMouseDown = this.elem.onmouseup = this.onMouseMove = this.onMouseOut = () => {}
+        this.onMouseDown = this.onMouseUp = this.onMouseMove = this.onMouseOut = () => {}
     }
     onMouseMove(e: MouseEvent){e}
     onMouseDown(e: MouseEvent){e}
     onMouseOut(e: MouseEvent){e}
+    onMouseUp(e: MouseEvent){e}
+    
     onHoveringPointChanged(pos: Point){pos}
 }

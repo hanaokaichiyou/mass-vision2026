@@ -9,7 +9,8 @@ window.onload = async () => {
   root.children.set(nr("div",{id: "pamphElem"}))
   const app = new App()
   root.children.push(app)
-
+  app.edit.editField.fixLayerCenter()
+  
   // mainWindowにフォーカスされたタイミングでショートカットを登録する
   const mainWindow = await WebviewWindow.getByLabel("main")
   mainWindow?.onFocusChanged(({payload: focued}) => {

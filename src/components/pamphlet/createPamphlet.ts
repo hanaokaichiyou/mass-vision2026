@@ -47,7 +47,7 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[]){
                     case "back": return new Pamph_BackWalk_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)))
                     case "rotate": 
                         // MEMO シーンをまたいだ連続の方転は繋げれるけど、同シーン内で連続してたら正しく動作しない
-                        const normalRet = new Pamph_Rotate_Cnvs(action.move.rotateAngle.evaluate(person.variables,true))
+                        const normalRet = new Pamph_Rotate_Cnvs(action.move.rotateAngle.evaluate(person.variables,true),count)
                         if(sceneIndex > 0 && accCount === 0){// 最初の方転は前シーンの方転に吸収されうる
                             const preLastAction = getLastAction(scenes[sceneIndex-1],person.id)
                             if(preLastAction && preLastAction.move.type === "rotate") return null
@@ -58,7 +58,7 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[]){
                             if(nextScenesMe && nextFirstAction && nextFirstAction.move.type === "rotate"){
                                 const rotateAngle = action.move.rotateAngle.evaluate(person.variables,true) + 
                                     nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
-                                return new Pamph_Rotate_Cnvs(rotateAngle)
+                                return new Pamph_Rotate_Cnvs(rotateAngle,count)
                             }
                         }
                         // 普通のとき
@@ -225,7 +225,7 @@ class Pamph_Break_Cnvs extends Narve.Component<HTMLCanvasElement> {
     }
 }
 class Pamph_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
-    constructor(angle: number){
+    constructor(angle: number,count: number){
         super("canvas",{class: "pamph_spin"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
@@ -249,6 +249,8 @@ class Pamph_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
             spinto = ""
         }
         ctx.fillText(`${spinto}${angle}°`,center[0],170)        
+        // カウント一応書いとく
+        ctx.fillText(`${count}`,...center)
     }
 }
 
@@ -281,7 +283,7 @@ class Pamph_Force_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
         ctx.font = "30px sans-serif"
-        ctx.fillText("次方向",center[0],170)        
+        ctx.fillText("次方向",center[0],170)    
     }
 }
 class Pamph_Slide_Cnvs extends Narve.Component<HTMLCanvasElement> {

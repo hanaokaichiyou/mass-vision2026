@@ -122,7 +122,7 @@ const _standReg = new RegExp(`std`)
 const linerReg = new RegExp(_linerReg.source + countReg.source,"g")
 const backReg = new RegExp(_backReg.source + countReg.source,"g")
 const breakReg = new RegExp(_breakReg.source + countReg.source,"g")
-const rotateReg = new RegExp(`t([rl])\{(${MathReg.source})\}`,"g")
+const rotateReg = new RegExp(`t([rl])\{(${MathReg.source})\}`+`(?:\\[(${MathReg.source})\\])?`,"g")
 const revolveReg = new RegExp(_revolveReg.source + countReg.source,"g")
 const slideReg = new RegExp(_slideReg.source + countReg.source,"g")
 const dyclonReg = new RegExp(_dyclonReg.source + countReg.source,"g")
@@ -241,6 +241,10 @@ function matchToBack(match: RegExpExecArray): action|null{
 }
 function matchToRotate(match: RegExpExecArray): action|null{
     if(match[1] === undefined || match[2] === undefined) return null
+    let count = new MathExp.ExpressionTree("0")
+    if(match[3] !== undefined){
+        count = new MathExp.ExpressionTree(match[3])
+    }
     try{
         const rotateAngle = new MathExp.ExpressionTree(`${match[1]==="r"?"(0-1)":"1"}*(${match[2]})`)
         return {
@@ -248,7 +252,7 @@ function matchToRotate(match: RegExpExecArray): action|null{
                 type: "rotate",
                 rotateAngle: rotateAngle
             },
-            count: new MathExp.ExpressionTree("0")
+            count: count
         }
     }catch{
         return null

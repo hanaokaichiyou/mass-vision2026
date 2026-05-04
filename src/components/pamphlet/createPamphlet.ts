@@ -45,7 +45,7 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: Pamph
             const macroElems = macro.actions.map((action) => {
                 const curState = nextState.clone()
                 const count = action.count.evaluate(person.variables,true)
-                if(action.move.type !== "rotate" && count === 0) return null
+                if(action.move.type !== "rotate" && action.move.type !== "absRotate" && count === 0) return null
 
                 accCount += count
                 const [_,newState] = createFramesFromAction(action,curState,0,scene.slides,person)
@@ -412,7 +412,7 @@ class Pamph_AbsRotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
 
         // 向きと方転角度
         ctx.font = "30px sans-serif"
-        ctx.fillText(`t${toAngle}°`,center[0],underTextY)
+        ctx.fillText(`t${(90 - toAngle + 360) % 360}°`,center[0],underTextY)
     }
 }
 
@@ -572,12 +572,10 @@ class Pamph_Dance_Cnvs extends Narve.Component<HTMLCanvasElement> {
         const heartStart1: [number,number] = [heartCenter1[0] - R * Math.cos(rad*2), heartCenter1[1] + R*Math.sin(rad*2)]
         ctx.beginPath()
         ctx.moveTo(...heartVertex)
-        // FROM ハートむずい
+        
         ctx.lineTo(...heartStart1)
         ctx.arc(...heartCenter1,R,Math.PI - rad*2, 0, false)
         ctx.arc(...heartCenter2,R,Math.PI,rad*2,false)
-        // ctx.arc(...heartCenter1,R,Math.PI/2 + rad/2,     0, false)
-        // ctx.arc(...heartCenter2,R,0      , rad/2, false)
         ctx.closePath()
         ctx.strokeStyle = "#000"
         ctx.lineWidth = 3

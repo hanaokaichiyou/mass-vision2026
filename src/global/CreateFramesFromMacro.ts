@@ -1,5 +1,5 @@
 import { message } from "@tauri-apps/plugin-dialog"
-import { action, move_back, move_dyclon, move_liner, move_revolve, move_rotate } from "./Macro"
+import { action, move_absRotate, move_back, move_dyclon, move_liner, move_revolve, move_rotate } from "./Macro"
 import { massCanvasDef } from "./massCanvasDef"
 import Person from "./Person"
 import PersonState, { AccuratePersonState } from "./PersonState"
@@ -29,16 +29,20 @@ export function createFramesFromAction(action: action, curState: PersonState,fpc
         if(frameNum < 0) throw new Error("")
     }catch{
         message("マクロの解析エラーです。マクロまたは変数設定に誤りがある可能性があります。")
+        console.error("Errored when getting frameNum")
         return [[],curState]
     }
+    let absPos: Point|undefined
     switch(action.move.type){
         case "break":   return createBreakFrames(curState,frameNum)
+        case "idle" :   return createIdleFrames(curState,frameNum)
         case "liner":   return createLinerFrames(action.move,curState,frameNum,person)
         case "back":    return createBackFrames(action.move,curState,frameNum,person)
         case "rotate":  return createRotateFrames(action.move,curState,frameNum,person)
+        case "absRotate": return createAbsRotateFrames(action.move,curState,frameNum,person)
         case "revolve": return createRevolveFrames(action.move,curState,frameNum,person)
         case "slide":
-            const absPos = slides[action.move.slideIndex.evaluate(person.variables,true)]?.links.find(v => v.person === person)?.absPos
+            absPos = slides[action.move.slideIndex.evaluate(person.variables,true)]?.links.find(v => v.person === person)?.absPos
             if(absPos === undefined){
                 return [[],curState.clone()]
             }
@@ -46,6 +50,14 @@ export function createFramesFromAction(action: action, curState: PersonState,fpc
         case "dyclon":  return createDyclonFrames(action.move,curState,frameNum,person)
         case "sit": return createSitFrames(curState,frameNum)
         case "stand": return createStandFrames(curState,frameNum)
+        case "dance": return createDanceFrames(curState,frameNum)
+        case "danceSlide": 
+            absPos = slides[action.move.slideIndex.evaluate(person.variables,true)]?.links.find(v => v.person === person)?.absPos
+            if(absPos === undefined){
+                return [[],curState.clone()]
+            }
+            return createDanceSlideFrames(absPos,curState,frameNum)
+        case "wave": return createWaveFrames(curState,frameNum)
     }
 }
 
@@ -55,6 +67,9 @@ export function createFramesFromAction(action: action, curState: PersonState,fpc
 // posは整数
 export function createBreakFrames(curState: PersonState,frameNum: number): [PersonState[],PersonState]{
     return [Array(frameNum).fill(0).map(_ => curState.clone()),curState.clone()]
+}// posは整数
+export function createIdleFrames(curState: PersonState,frameNum: number): [PersonState[],PersonState]{
+    return [Array(frameNum).fill(0).map(_ => curState.clone()),curState.clone()]
 }
 // posは整数
 export function createLinerFrames(move: move_liner,curState: PersonState,frameNum: number,person: Person): [PersonState[],PersonState]{
@@ -63,6 +78,7 @@ export function createLinerFrames(move: move_liner,curState: PersonState,frameNu
         dcell = move.dcell.evaluate(person.variables) // dcellは小数OK
     }catch{
         message("マクロの解析エラーです。マクロまたは変数設定に誤りがある可能性があります。")
+        console.error("Errored when getting dcell in f")
         return [[],curState]
     }
 
@@ -91,6 +107,7 @@ export function createBackFrames(move: move_back,curState: PersonState,frameNum:
         dcell = -move.dcell.evaluate(person.variables) // dcellは小数OK。backWalkなのでdcellは逆になる
     }catch{
         message("マクロの解析エラーです。マクロまたは変数設定に誤りがある可能性があります。")
+        console.error("Errored when getting dcell in f")
         return [[],curState]
     }
 
@@ -119,16 +136,44 @@ export function createRotateFrames(move: move_rotate,curState: PersonState,frame
         rotateAngle = move.rotateAngle.evaluate(person.variables,true) * (person.reverseFlag?-1:1)
     }catch{
         message("マクロの解析エラーです。マクロまたは変数設定に誤りがある可能性があります。")
+        console.error("Errored when getting rotateAngle")
         return [[],curState]
     }
     if(frameNum > 0){
-        const dRotateAngle = rotateAngle / frameNum
-        return [Array(frameNum).fill(0).map((_,i) => {
+        const fpc = 1 // n方はfpcを上げてなめらかにする
+        const dRotateAngle = rotateAngle / (frameNum*fpc)
+        return [Array(frameNum*fpc).fill(0).map((_,i) => {
             const f = i
             return new PersonState(curState.pos,curState.rotateAngle + dRotateAngle * f)
         }),new PersonState(curState.pos,curState.rotateAngle + rotateAngle)]
     }else{
         return [[],new PersonState(curState.pos,curState.rotateAngle + rotateAngle)]
+    }
+}
+// posは整数
+export function createAbsRotateFrames(move: move_absRotate,curState: PersonState,frameNum: number,person: Person): [PersonState[],PersonState]{
+    let absRotateAngle: number
+    try{
+        absRotateAngle = move.rotateAngle.evaluate(person.variables,true) * (person.reverseFlag?-1:1)
+        absRotateAngle = (90 - absRotateAngle + 360) % 360 // ユーザーの思う度数表現をシステム内の度数表現に直す
+    }catch{
+        message("マクロの解析エラーです。マクロまたは変数設定に誤りがある可能性があります。")
+        console.error("Errored when getting absRotateAngle",move)
+        return [[],curState]
+    }
+    let rotateAngle = (360 + absRotateAngle - curState.rotateAngle) % 360
+    if(Math.abs(rotateAngle) > Math.abs(360 - rotateAngle)){ // 方転角度の絶対値の小さいほうで方転する
+        rotateAngle -= 360
+    }
+    if(frameNum > 0){
+        const fpc = 1 // n方はfpcを上げてなめらかにする
+        const dRotateAngle = rotateAngle / (frameNum*fpc)
+        return [Array(frameNum*fpc).fill(0).map((_,i) => {
+            const f = i
+            return new PersonState(curState.pos,curState.rotateAngle + dRotateAngle * f)
+        }),new PersonState(curState.pos, absRotateAngle)]
+    }else{
+        return [[],new PersonState(curState.pos, absRotateAngle)]
     }
 }
 // posは小数許可
@@ -138,6 +183,7 @@ export function createRevolveFrames(move: move_revolve,curState: PersonState,fra
         revolveAngle = move.revolveAngle.evaluate(person.variables,false)
     }catch{
         message("マクロの解析エラーです。マクロまたは変数設定に誤りがある可能性があります。")
+        console.error("Errored when getting revolveAngle in r")
         return [[],curState]
     }
     const dRevolveTheta = frameNum !== 0 ? revolveAngle / frameNum : 0
@@ -173,6 +219,7 @@ export function createDyclonFrames(move: move_dyclon,curState: PersonState,frame
         if(lastR < 0) throw new Error("")
     }catch{
         message("マクロの解析エラーです。マクロまたは変数設定に誤りがある可能性があります。")
+        console.error("Errored when getting lastR")
         return [[],curState]
     }
     let revolveAngle: number
@@ -180,6 +227,7 @@ export function createDyclonFrames(move: move_dyclon,curState: PersonState,frame
         revolveAngle = move.revolveAngle.evaluate(person.variables,false)
     }catch{
         message("マクロの解析エラーです。マクロまたは変数設定に誤りがある可能性があります。")
+        console.error("Errored when getting revolveAngle in dl")
         return [[],curState]
     }
     const R = curState.pos.distance(move.center)
@@ -249,6 +297,27 @@ export function createStandFrames(curState: PersonState,frameNum: number): [Pers
         }
     ),new PersonState(curState.pos.add([dx,dy]),curState.rotateAngle)]
 }
+export function createDanceFrames(curState: PersonState,frameNum: number): [PersonState[],PersonState]{
+    return [Array(frameNum).fill(0).map(_ => curState.clone()),curState.clone()]
+}
+export function createDanceSlideFrames(absPos: Point,curState: PersonState,frameNum: number): [PersonState[],PersonState]{
+    const relMove = absPos.sub(curState.pos).toDiff()
+    const dxy = relMove.mul(frameNum !== 0 ? 1/frameNum : 0)
+    const rotateAngle = relMove.length() > 0.0001?
+        relMove.angle() :
+        curState.rotateAngle
+    return [Array(frameNum).fill(0).map((_,i) => {
+        const f = i
+        return new AccuratePersonState(curState.pos.add(dxy.mul(f)),rotateAngle)
+    }),new AccuratePersonState(curState.pos.add(relMove),rotateAngle)]
+}
+export function createWaveFrames(curState: PersonState,frameNum: number): [PersonState[],PersonState]{
+    const newState = curState.clone()
+    newState.rotateAngle += 180
+    newState.rotateAngle %= 360
+    return [Array(frameNum).fill(0).map(_ => newState.clone()),newState.clone()]
+}
+
 
 
 // export function createGenRevolve(numOfFrames: number,move: move_genRevolve,state: PersonState): PersonState[]{

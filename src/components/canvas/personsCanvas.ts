@@ -39,7 +39,7 @@ export default class PersonsCanvas extends MassCanvas {
     }
     drawFrame(frame: frame){
         this.clearAll()
-        frame.forEach(({state,person}) => {
+        frame.statePersonPairs.forEach(({state,person}) => {
             person.state = state.clone()
             this.plot(state,person.colorIndex,person.id)
         })

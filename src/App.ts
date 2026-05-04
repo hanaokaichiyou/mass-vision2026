@@ -12,6 +12,7 @@ import ScenePage from "./components/ScenePage";
 import ManualPlayer from "./global/ManualPlayer";
 import Person from "./global/Person";
 import MusicPlayer from "./global/MusicPlayer";
+import { PamphMode } from "./components/pamphlet/createPamphlet";
 
 
 export default class App extends Narve.Component {
@@ -19,6 +20,7 @@ export default class App extends Narve.Component {
     edit: Edit
     scenePage = new ScenePage(this.scenes)
     defaultCpm: number = 180
+    defaultPamphMode: PamphMode = "MoonFlag"
     undo = new Undo()
 
     currentSceneIdx = 0
@@ -67,7 +69,7 @@ export default class App extends Narve.Component {
         this.scenes = scenes
         if(scenes.length === 0) this.scenes.push(new Scene())
             console.log(this.scenes)
-        this.setScene(this.scenes[0])
+        this.setScene(this.scenes[0],true)
 
         this.undo = new Undo()
         this.edit.pushUndo = 
@@ -80,20 +82,29 @@ export default class App extends Narve.Component {
         createMenu(this)
         this.onScenesChanged()
     }
-    async setScene(scene: number|Scene){
+    async setScene(scene: number|Scene,ignoreErrorAndConfirm: boolean = false){
         const currentScene = this.scenes[this.currentSceneIdx]
         if(currentScene !== undefined){
             if(!PlayConditions.macroOk(currentScene)){
-                await message("編集中のシーンにマクロが設定されていない人がいます。")
-                return
+                if(ignoreErrorAndConfirm) await message("編集中のシーンにマクロが設定されていない人がいますが、このまま続行します。")
+                else {
+                    await message("編集中のシーンにマクロが設定されていない人がいます。")
+                    return
+                }
             }
             if(!PlayConditions.countOk(currentScene)){
-                await message("編集中のシーンにカウント数が一致しない人がいます。")
-                return
+                if(ignoreErrorAndConfirm) await message("編集中のシーンにカウント数が一致しない人がいますが、このまま続行します。")
+                else{
+                    await message("編集中のシーンにカウント数が一致しない人がいます。")
+                    return
+                }
             }
             if(!PlayConditions.countZeroOk(currentScene)){
-                await message("編集中のシーンのカウント数が0です。カウント数が0のシーンを作ることはできません。")
-                return 
+                if(ignoreErrorAndConfirm) await message("編集中のシーンのカウント数が0です。カウント数が0のシーンを作ることはできませんが、このまま続行します。")
+                else{
+                    await message("編集中のシーンのカウント数が0です。カウント数が0のシーンを作ることはできません。")
+                    return 
+                }
             }
         }
         if(typeof scene === "number"){

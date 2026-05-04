@@ -25,7 +25,7 @@ export default async function registerShortcutKey(app: App){
     // MEMO 再生中にシーン切り替えとかのショートカットキー押すと意味わからんことになるから注意
     await register("Ctrl+O",(e) => ur(e, ()=>menuFunctions.open(app)))
     await register("Ctrl+S", (e) => ur(e,()=>menuFunctions.save(app)))
-    await register("Ctrl+P", (e) => ur(e,()=>menuFunctions.print(app)))
+    // await register("Ctrl+P", (e) => ur(e,()=>menuFunctions.print(app)))
     await register("Ctrl+Shift+G", (e) => ur(e,()=>menuFunctions.gotoScenePage(app)))
     await register("Ctrl+Shift+ArrowLeft", (e) => ur(e,()=>menuFunctions.gotoPrevScene(app)))
     await register("Ctrl+Shift+ArrowRight", (e) => ur(e,()=>menuFunctions.gotoNextScene(app)))

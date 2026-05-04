@@ -30,19 +30,42 @@ export default class Player {
             for(let scene_i = 0; scene_i < sceneFramess.length; scene_i++){
                 const sceneArr = timeToDraw[scene_i] // HACK シャローコピーして添え字をつけなくてよくする
 
+                // MEMO サブフレームは次にある非サブフレームまでの時間を等分する
                 if(slowSegmentss[scene_i] !== undefined){
-                    slowSegmentss[scene_i].forEach(slowSegments => {
+                    slowSegmentss[scene_i].forEach(slowSegment => {
                         // 区間の「間」の時間が遅くなるので、let i = ...「+1」になる
-                        for(let i = slowSegments.seg[0]+1; i <= slowSegments.seg[1] + (segPlus1?1:0); i++){
+                        let subCount = 0
+                        for(let i = slowSegment.seg[0]+1; i <= slowSegment.seg[1] + (segPlus1?1:0); i++){
+                            // Warning シーンを二つ超えるとバグる
                             if(i < sceneArr.length){
-                                sceneArr[i] = 1000 / (fpc * slowSegments.cpm / 60)
+                                if(sceneFramess[scene_i][i].isSubFrame){
+                                    subCount++
+                                }else{
+                                    for(let _i = i-subCount; _i <= i; _i++){
+                                        sceneArr[_i] = 1000 / (fpc * slowSegment.cpm / 60) / (subCount+1)
+                                    }
+                                    subCount = 0
+                                }
                             }else if(scene_i+1 < timeToDraw.length){
-                                timeToDraw[scene_i+1][i-sceneArr.length] = 1000 / (fpc * slowSegments.cpm / 60)
+                                if(sceneFramess[scene_i+1][i-sceneArr.length] === undefined)
+                                    console.log("sceneFramess(",scene_i+1,i-sceneArr.length,") is undefined")
+                                if(sceneFramess[scene_i+1][i-sceneArr.length].isSubFrame){
+                                    subCount++
+                                }else{
+                                    for(let _i = i-subCount; _i <= i; _i++){
+                                        const dTime = 1000 / (fpc * slowSegment.cpm / 60) / (subCount+1)
+                                        if(_i < sceneArr.length){
+                                            timeToDraw[scene_i][_i] = dTime
+                                        }else{
+                                            timeToDraw[scene_i+1][_i-sceneArr.length] = dTime
+                                        }
+                                    }
+                                    subCount = 0
+                                }
                             }
                         }
                     })
                 }
-                console.log("scene", scene_i,[...sceneArr])
             }
             // 累積する
             for(let scene_i = 0; scene_i < timeToDraw.length; scene_i++){
@@ -68,7 +91,8 @@ export default class Player {
 
             const start = Date.now()
             let curSceneIndex = 0
-            let f = 0
+            let f = 0 // 表示されるフレームナンバー
+            let i = 0 // 補フレームを含めたフレームのインデックス
             
             this.pause = ()=>{
                 this.stop(resolve)
@@ -78,13 +102,13 @@ export default class Player {
             this.playingInterval = setInterval(() => {
                 const cur = Date.now() - start
                 // 計画した時間が来るまで待つ
-                if(cur < timeToDraw[curSceneIndex][f]) return
+                if(cur < timeToDraw[curSceneIndex][i]) return
 
                 this.personsCanvas.clearAll()
-                const frame = sceneFramess[curSceneIndex]?.[f]
+                const frame = sceneFramess[curSceneIndex]?.[i]
                 if(frame === undefined) return
                 
-                frame.forEach(({state,person}) => {
+                frame.statePersonPairs.forEach(({state,person}) => {
                     this.personsCanvas.plot(state,person.colorIndex)
                     person.state = state.clone()
                 })
@@ -94,9 +118,12 @@ export default class Player {
                         count: f/fpc
                     })
                 }
-                f++
-                if(f >= sceneFramess[curSceneIndex].length){
+                if(!frame.isSubFrame) f++
+                
+                i++
+                if(i >= sceneFramess[curSceneIndex].length){
                     f = 0
+                    i = 0
                     curSceneIndex++
                 }
                 if(curSceneIndex >= sceneFramess.length){

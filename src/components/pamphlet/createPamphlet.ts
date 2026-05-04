@@ -7,8 +7,14 @@ import { createFirstFrame, createFrames } from "../../global/CreateFrames";
 import { action } from "../../global/Macro";
 import { MathExp } from "../../global/mathExp";
 import simLastState from "../../global/simLastState";
+import { createFramesFromAction } from "../../global/CreateFramesFromMacro";
+import PointDiff from "../../global/PointDiff";
+import Point from "../../global/Point";
+import { massCanvasDef } from "../../global/massCanvasDef";
 
-export function createPamphlet(scenes: Scene[],colorFills: boolean[]){
+
+// FROM パンフに反映されないマクロが存在する(test.msvi参照)
+export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: PamphMode){
     const personalPamphlets: Narve.Component[] = []
     scenes.forEach((scene,sceneIndex) => {
         const frame = createFirstFrame(scene)
@@ -34,23 +40,34 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[]){
             const sumCount = macro.actions.reduce((pre,act) => 
                 pre + act.count.evaluate(person.variables,true)
             ,0)
-
+            let nextState = person.startState.clone()
+            console.log(`scene:${sceneIndex}`,macro.macroStr,`actions`, macro.actions)
             const macroElems = macro.actions.map((action) => {
+                const curState = nextState.clone()
                 const count = action.count.evaluate(person.variables,true)
                 if(action.move.type !== "rotate" && count === 0) return null
 
                 accCount += count
+                const [_,newState] = createFramesFromAction(action,curState,0,scene.slides,person)
+                nextState = newState
                 switch(action.move.type){
                     case "break": return new Pamph_Break_Cnvs(count,action.move.text)
-                    // TODO　「立ち」のパンフでの表示に困ってる
-                    case "liner": return new Pamph_FrontWalk_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)))
-                    case "back": return new Pamph_BackWalk_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)))
+                    case "idle" : return new Pamph_Idle_Cnvs(count,action.move.text)
+                    case "liner": return new Pamph_FrontWalk_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)),mode)
+                    case "back": return new Pamph_BackWalk_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)),mode)
                     case "rotate": 
                         // MEMO シーンをまたいだ連続の方転は繋げれるけど、同シーン内で連続してたら正しく動作しない
-                        const normalRet = new Pamph_Rotate_Cnvs(action.move.rotateAngle.evaluate(person.variables,true),count)
+                        const normalRet = new Pamph_Rotate_Cnvs(action.move.rotateAngle.evaluate(person.variables,true),nextState.rotateAngle,count)
                         if(sceneIndex > 0 && accCount === 0){// 最初の方転は前シーンの方転に吸収されうる
                             const preLastAction = getLastAction(scenes[sceneIndex-1],person.id)
-                            if(preLastAction && preLastAction.move.type === "rotate") return null
+                            if(preLastAction){
+                                if(preLastAction.move.type === "rotate") return null
+                                if(preLastAction.move.type === "absRotate") return null
+                                if(preLastAction.move.type === "slide") return null
+                                if(preLastAction.move.type === "danceSlide") return null
+                                if(preLastAction.move.type === "revolve") return null
+                                if(preLastAction.move.type === "dyclon") return null
+                            }
                         }
                         if(sceneIndex < scenes.length-1 && accCount === sumCount){ // 最後の方転は次シーンの最初の方転を吸収する可能性あり
                             const nextScenesMe = scenes[sceneIndex+1].persons.find(p => p.id = person.id)
@@ -58,22 +75,35 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[]){
                             if(nextScenesMe && nextFirstAction && nextFirstAction.move.type === "rotate"){
                                 const rotateAngle = action.move.rotateAngle.evaluate(person.variables,true) + 
                                     nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
-                                return new Pamph_Rotate_Cnvs(rotateAngle,count)
+                                return new Pamph_Rotate_Cnvs(rotateAngle,nextState.rotateAngle,count)
                             }
                         }
                         // 普通のとき
                         return normalRet
+                    case "absRotate":
+                        return new Pamph_AbsRotate_Cnvs(nextState.rotateAngle,count)
                     case "revolve":
+                        const toAngle = curState.pos.angle(massCanvasDef.centerPx) + (action.move.revolveAngle.evaluate(person.variables) >= 0 ? -90 : 90)
+                        return new Pamph_Slide_Set_Cnvs(count,toAngle,"大回")
                     case "dyclon":
+                        const [frames,_] = createFramesFromAction(action,curState,1,scene.slides,person)
+                        const to = frames[1]?.pos || _.pos
+                        return new Pamph_Slide_Set_Cnvs(count,frames[0].pos.angle(to),"ダイクロン")
                     case "slide":
-                        return new Pamph_Slide_Set_Cnvs(count)
+                        return new Pamph_Slide_Set_Cnvs(count,nextState.rotateAngle,action.move.text)
                     case "sit": return new Pamph_Sit_Cnvs(count)
                     case "stand": return new Pamph_Stand_Cnvs(count)
+
+                    case "dance": 
+                    case "danceSlide": 
+                        return new Pamph_Dance_Cnvs(count,action.move.text)
+                    case "wave": return new Pamph_Wave_Cnvs(count,action.move.text)
                 }
             }).filter(v => v !== null)
 
             
             // 初期方向設定による強制的な方転について
+            // MEMO 強制的な方転は通常の方転と連続してもつながらないです！
             if(sceneIndex < scenes.length-1){
                 const nextScenesMe = scenes[sceneIndex+1].persons.find(p => p.id = person.id)
                 if(nextScenesMe){
@@ -83,11 +113,12 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[]){
                         firstActType !== "slide" && 
                         firstActType !== "rotate" &&
                         firstActType !== "dyclon" &&
-                        firstActType !== "revolve"
+                        firstActType !== "revolve" &&
+                        firstActType !== "danceSlide"
                     ){ // 次シーンの最初にスライド・方転が入ると初期方向設定による強制的な方転が無視される
                         const curLastRotateAngle = simLastState(person, scene).rotateAngle
                         if(curLastRotateAngle !== nextScenesMe.startState.rotateAngle){
-                            macroElems.push(new Pamph_Force_Rotate_Cnvs())
+                            macroElems.push(new Pamph_Force_Rotate_Cnvs(nextScenesMe.startState.rotateAngle))
                         }
                     }
                 }
@@ -161,204 +192,441 @@ function getLastAction(scene: Scene,id: number){
     return firstAction
 }
 
+export type PamphMode = "MoonFlag"|"MoonFemale"|"SunShield"|"SunFemale"
+
+const upperTextY = 15
+const underTextY = 185
 class Pamph_FrontWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {
-    constructor(count: number, cpcell: number){
+    // TODO modeに応じて書き分ける
+    constructor(count: number, cpcell: number, mode: PamphMode){
         super("canvas",{class: "pamph_move"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
 
-        const center: [number,number] = [80,80]
+        const center: [number,number] = [80,100]
         this.elem.width = 160
         this.elem.height = 200
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
         ctx.font = "50px sans-serif"
         ctx.fillText(`${count}`,...center)
-        if(cpcell !== 3){
-            ctx.font = "30px sans-serif"
-            ctx.fillText(`1マス${cpcell}`,center[0],170)
-        }
+        ctx.font = "30px sans-serif"
+        let underText = ""
+        let upperText = ""
+        switch(mode){
+            case "MoonFlag":
+                if(cpcell !== 3){
+                    underText = `1マス${cpcell}`
+                }
+                break
 
+            case "SunShield":
+                // MEMO 盾って1マス2と4どっちを省略するんだっけ？
+                underText = `1マス${cpcell}`
+                break
+
+            case "MoonFemale":
+            case "SunFemale":
+                if(cpcell === 2){
+                    upperText = "倍"
+                }else if(cpcell === 4){
+                    upperText = "定"
+                }else{
+                    underText = `1マス${cpcell}`
+                }
+                break
+        }
+        ctx.fillText(upperText,center[0],upperTextY)
+        ctx.fillText(underText,center[0],underTextY)
     }
 }
 class Pamph_BackWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {
-    constructor(count: number, cpcell: number){
+    // TODO modeに応じて書き分ける
+    constructor(count: number, cpcell: number, mode: PamphMode){
         super("canvas",{class: "pamph_move"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
 
-        const center: [number,number] = [80,80]
+        const center: [number,number] = [80,100]
         this.elem.width = 160
         this.elem.height = 200
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
         ctx.font = "50px sans-serif"
         ctx.fillText(`${count}`,...center)
-        if(cpcell !== 3){
-            ctx.font = "30px sans-serif"
-            ctx.fillText(`(後ろ)1マス${cpcell}`,center[0],170)
-        }else{
-            ctx.font = "30px sans-serif"
-            ctx.fillText(`(後ろ)`,center[0],170)
-        }
 
+        let upperText = ""
+        let underText = "後"
+        switch(mode){
+            case "MoonFlag":
+                if(cpcell !== 3){
+                    underText += `1マス${cpcell}`
+                }
+                break
+
+            case "SunShield":
+                // MEMO 盾って1マス2と4どっちを省略するんだっけ？
+                underText += `1マス${cpcell}`
+                break
+
+            case "MoonFemale":
+            case "SunFemale":
+                if(cpcell === 2){
+                    upperText = "倍"
+                }else if(cpcell === 4){
+                    upperText = "定"
+                }else{
+                    underText += `1マス${cpcell}`
+                }
+                break
+        }
+        ctx.fillText(upperText,center[0],upperTextY)
+        ctx.fillText(underText,center[0],underTextY)
     }
 }
 class Pamph_Break_Cnvs extends Narve.Component<HTMLCanvasElement> {
-    constructor(count: number,text: string){
+    // 正方形
+    constructor(count: number,text: string = ""){
         super("canvas",{class: "pamph_break"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
 
-        const center: [number,number] = [80,80]
+        const center: [number,number] = [80,100]
         this.elem.width = 160
         this.elem.height = 200
         ctx.strokeStyle = "#000"
         ctx.lineWidth = 3
-        ctx.strokeRect(10,10,140,140)
+        ctx.strokeRect(15,35,130,130)
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
         ctx.font = "50px sans-serif"
         ctx.fillText(`${count}`,...center)
         ctx.font = "30px sans-serif"
-        ctx.fillText(text,center[0],170)
+        ctx.fillText(text,center[0],underTextY)
     }
 }
-class Pamph_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
-    constructor(angle: number,count: number){
+class Pamph_Idle_Cnvs  extends Narve.Component<HTMLCanvasElement> {
+    // 正方形
+    constructor(count: number,text: string = ""){
         super("canvas",{class: "pamph_spin"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
 
-        const center: [number,number] = [80,80]
+        const center: [number,number] = [80,100]
         this.elem.width = 160
         this.elem.height = 200
         ctx.strokeStyle = "#000"
         ctx.lineWidth = 3
-        ctx.arc(...center,40,0,2*Math.PI)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.arc(...center,70,0,2*Math.PI)
-        ctx.stroke()
+        ctx.strokeRect(15,35,130,130)
+
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
+
         ctx.font = "30px sans-serif"
-        let spinto = angle>=0? "左" : "右"
-        angle = Math.abs(angle)
-        if(angle === 180){
+        ctx.fillText("足踏み",center[0],upperTextY)
+
+        // カウント
+        ctx.font = "50px sans-serif"
+        ctx.fillText(`${count}`,...center)
+
+        // テキスト
+        ctx.font = "30px sans-serif"
+        ctx.fillText(text,center[0],underTextY)
+    }
+}
+class Pamph_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
+    // 円＋方向の線
+    constructor(relAngle: number,toAngle: number,count: number){
+        super("canvas",{class: "pamph_spin"})
+        const ctx = this.elem.getContext("2d")
+        if(ctx === null) return
+
+        const center: [number,number] = [80,100]
+        const R = 40
+        const lineR = 60
+        this.elem.width = 160
+        this.elem.height = 200
+        ctx.strokeStyle = "#000"
+        ctx.lineWidth = 3
+        ctx.arc(...center,R,0,2*Math.PI)
+        ctx.stroke()
+        const diffStart = new PointDiff(R,0)
+        const diffEnd = new PointDiff(lineR,0)
+
+        diffStart.revolve(toAngle)
+        diffEnd.revolve(toAngle)
+        const cenPoint = new Point(...center)
+        ctx.moveTo(...cenPoint.add(diffStart).getPair())
+        ctx.lineTo(...cenPoint.add(diffEnd).getPair())
+        ctx.stroke()
+        
+        ctx.textBaseline = "middle"
+        ctx.textAlign    = "center"
+
+        // カウント
+        ctx.font = "50px sans-serif"
+        ctx.fillText(`${count}`,...center)
+
+        // 向きと方転角度
+        ctx.font = "30px sans-serif"
+        let spinto = relAngle>=0? "左" : "右"
+        relAngle = Math.abs(relAngle)
+        if(relAngle === 180){
             spinto = ""
         }
-        ctx.fillText(`${spinto}${angle}°`,center[0],170)        
-        // カウント一応書いとく
+        ctx.fillText(`${spinto}${relAngle}°`,center[0],underTextY)
+    }
+}
+class Pamph_AbsRotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
+    // 円＋方向の線
+    constructor(toAngle: number,count: number){
+        super("canvas",{class: "pamph_spin"})
+        const ctx = this.elem.getContext("2d")
+        if(ctx === null) return
+
+        const center: [number,number] = [80,100]
+        const R = 40
+        const lineR = 60
+        this.elem.width = 160
+        this.elem.height = 200
+        ctx.strokeStyle = "#000"
+        ctx.lineWidth = 3
+        ctx.arc(...center,R,0,2*Math.PI)
+        ctx.stroke()
+        const diffStart = new PointDiff(R,0)
+        const diffEnd = new PointDiff(lineR,0)
+
+        diffStart.revolve(toAngle)
+        diffEnd.revolve(toAngle)
+        const cenPoint = new Point(...center)
+        ctx.moveTo(...cenPoint.add(diffStart).getPair())
+        ctx.lineTo(...cenPoint.add(diffEnd).getPair())
+        ctx.stroke()
+        
+        ctx.textBaseline = "middle"
+        ctx.textAlign    = "center"
+
+        // カウント
+        ctx.font = "50px sans-serif"
         ctx.fillText(`${count}`,...center)
+
+        // 向きと方転角度
+        ctx.font = "30px sans-serif"
+        ctx.fillText(`t${toAngle}°`,center[0],underTextY)
     }
 }
 
 // スライドによる方転とスライドの記号をセットにしたもの
 class Pamph_Slide_Set_Cnvs extends Narve.Component{
-    constructor(count: number){
+    constructor(count: number,toAngle: number,text: string = ""){
         super("div",{},
-            new Pamph_Force_Rotate_Cnvs(),
-            new Pamph_Slide_Cnvs(count)
+            new Pamph_Force_Rotate_Cnvs(toAngle),
+            new Pamph_Slide_Cnvs(count,text)
         )
     }
 }
 // スライド・初期方向設定による強制的な方転を示す記号
 class Pamph_Force_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
-    constructor(){
+    // 円＋方向の線
+    constructor(toAngle: number){
         super("canvas",{class: "pamph_spin"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
 
-        const center: [number,number] = [80,80]
+        const center: [number,number] = [80,100]
+        const R = 40
+        const lineR = 60
         this.elem.width = 160
         this.elem.height = 200
         ctx.strokeStyle = "#000"
         ctx.lineWidth = 3
-        ctx.arc(...center,40,0,2*Math.PI)
+        ctx.arc(...center,R,0,2*Math.PI)
         ctx.stroke()
-        ctx.beginPath()
-        ctx.arc(...center,70,0,2*Math.PI)
+
+        const diffStart = new PointDiff(R,0)
+        const diffEnd = new PointDiff(lineR,0)
+
+        diffStart.revolve(toAngle)
+        diffEnd.revolve(toAngle)
+        const cenPoint = new Point(...center)
+        ctx.moveTo(...cenPoint.add(diffStart).getPair())
+        ctx.lineTo(...cenPoint.add(diffEnd).getPair())
         ctx.stroke()
+
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
+
+        // カウント
+        ctx.font = "50px sans-serif"
+        ctx.fillText("0",...center)
+
         ctx.font = "30px sans-serif"
-        ctx.fillText("次方向",center[0],170)    
+        ctx.fillText("次方向",center[0],underTextY)
     }
 }
 class Pamph_Slide_Cnvs extends Narve.Component<HTMLCanvasElement> {
-    constructor(count: number){
+    // 正三角形
+    constructor(count: number,text: string = ""){
         super("canvas",{class: "pamph_slide"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
 
-        const center: [number,number] = [80,80]
+        const center: [number,number] = [80,100]
         this.elem.width = 160
         this.elem.height = 200
 
-        const edgeLen = 140
+        const edgeLen = 130
         ctx.strokeStyle = "#000"
         ctx.lineWidth = 3
-        ctx.moveTo(center[0],10)
-        ctx.lineTo(center[0]-edgeLen/2,10 + edgeLen * Math.sqrt(3)/2)
-        ctx.lineTo(center[0]+edgeLen/2,10 + edgeLen * Math.sqrt(3)/2)
+        ctx.moveTo(center[0],30)
+        ctx.lineTo(center[0]-edgeLen/2,30 + edgeLen * Math.sqrt(3)/2)
+        ctx.lineTo(center[0]+edgeLen/2,30 + edgeLen * Math.sqrt(3)/2)
         ctx.closePath()
         ctx.stroke()
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
+
+        // カウント
         ctx.font = `50px sans-serif`
-        ctx.fillText(`${count}`,center[0],10 + edgeLen * Math.sqrt(3)/3)
+        ctx.fillText(`${count}`,center[0],30 + edgeLen * Math.sqrt(3)/3)
+
+        // テキスト
+        ctx.font = '30px sans-serif'
+        ctx.fillText(text,center[0],underTextY)
     }
 }
 class Pamph_Sit_Cnvs extends Narve.Component<HTMLCanvasElement> {
+    // 正三角形
     constructor(count: number){
         super("canvas",{class: "pamph_slide"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
 
-        const center: [number,number] = [80,80]
+        const center: [number,number] = [80,100]
         this.elem.width = 160
         this.elem.height = 200
 
-        const edgeLen = 140
+        const edgeLen = 130
         ctx.strokeStyle = "#000"
         ctx.lineWidth = 3
-        ctx.moveTo(center[0],10)
-        ctx.lineTo(center[0]-edgeLen/2,10 + edgeLen * Math.sqrt(3)/2)
-        ctx.lineTo(center[0]+edgeLen/2,10 + edgeLen * Math.sqrt(3)/2)
+        ctx.moveTo(center[0],30)
+        ctx.lineTo(center[0]-edgeLen/2,30 + edgeLen * Math.sqrt(3)/2)
+        ctx.lineTo(center[0]+edgeLen/2,30 + edgeLen * Math.sqrt(3)/2)
         ctx.closePath()
         ctx.stroke()
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
         ctx.font = `50px sans-serif`
-        ctx.fillText(`${count}`,center[0],10 + edgeLen * Math.sqrt(3)/3)
+        ctx.fillText(`${count}`,center[0],30 + edgeLen * Math.sqrt(3)/3)
         ctx.font = `30px sans-serif`
-        ctx.fillText("座り",center[0],170)
+        ctx.fillText("座り",center[0],underTextY)
     }
 }
 class Pamph_Stand_Cnvs extends Narve.Component<HTMLCanvasElement> {
+    // 正三角形
     constructor(count: number){
         super("canvas",{class: "pamph_slide"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
 
-        const center: [number,number] = [80,80]
+        const center: [number,number] = [80,100]
         this.elem.width = 160
         this.elem.height = 200
 
-        const edgeLen = 140
+        const edgeLen = 130
         ctx.strokeStyle = "#000"
         ctx.lineWidth = 3
-        ctx.moveTo(center[0],10)
-        ctx.lineTo(center[0]-edgeLen/2,10 + edgeLen * Math.sqrt(3)/2)
-        ctx.lineTo(center[0]+edgeLen/2,10 + edgeLen * Math.sqrt(3)/2)
+        ctx.moveTo(center[0],30)
+        ctx.lineTo(center[0]-edgeLen/2,30 + edgeLen * Math.sqrt(3)/2)
+        ctx.lineTo(center[0]+edgeLen/2,30 + edgeLen * Math.sqrt(3)/2)
         ctx.closePath()
         ctx.stroke()
         ctx.textBaseline = "middle"
         ctx.textAlign    = "center"
         ctx.font = `50px sans-serif`
-        ctx.fillText(`${count}`,center[0],10 + edgeLen * Math.sqrt(3)/3)
+        ctx.fillText(`${count}`,center[0],30 + edgeLen * Math.sqrt(3)/3)
         ctx.font = `30px sans-serif`
-        ctx.fillText("立ち",center[0],170)
+        ctx.fillText("立ち",center[0],underTextY)
+    }
+}
+
+class Pamph_Dance_Cnvs extends Narve.Component<HTMLCanvasElement> {
+    // ハート
+    constructor(count: number,text: string = ""){
+        super("canvas",{class: "pamph_slide"})
+        const ctx = this.elem.getContext("2d")
+        if(ctx === null) return
+
+        const center: [number,number] = [80,100]
+        this.elem.width = 160
+        this.elem.height = 200
+
+        const heartVertex: [number, number] = [center[0],165]
+        const R = 130/4
+        const heartCenter1: [number, number] = [ 15 + R, 35 + R]
+        const heartCenter2: [number, number] = [145 - R, 35 + R]
+        
+        const d = Math.hypot(heartCenter1[0] - heartVertex[0],heartCenter1[1] - heartVertex[1])
+        const rad = Math.atan2(R,Math.sqrt(d*d - R*R))
+
+        const heartStart1: [number,number] = [heartCenter1[0] - R * Math.cos(rad*2), heartCenter1[1] + R*Math.sin(rad*2)]
+        ctx.beginPath()
+        ctx.moveTo(...heartVertex)
+        // FROM ハートむずい
+        ctx.lineTo(...heartStart1)
+        ctx.arc(...heartCenter1,R,Math.PI - rad*2, 0, false)
+        ctx.arc(...heartCenter2,R,Math.PI,rad*2,false)
+        // ctx.arc(...heartCenter1,R,Math.PI/2 + rad/2,     0, false)
+        // ctx.arc(...heartCenter2,R,0      , rad/2, false)
+        ctx.closePath()
+        ctx.strokeStyle = "#000"
+        ctx.lineWidth = 3
+        ctx.stroke() 
+        
+        ctx.textAlign = "center"
+        ctx.textBaseline = "middle"
+
+        // カウント
+        ctx.font = `50px sans-serif`
+        ctx.fillText(`${count}`, ...center)
+
+        // テキスト
+        ctx.font = '30px sans-serif'
+        ctx.fillText(text,center[0],underTextY)
+    }
+}
+class Pamph_Wave_Cnvs extends Narve.Component<HTMLCanvasElement> {
+    // 扇形
+    constructor(count: number,text: string = ""){
+        super("canvas",{class: "pamph_slide"})
+        const ctx = this.elem.getContext("2d")
+        if(ctx === null) return
+
+        const center: [number,number] = [80,100]
+        this.elem.width = 160
+        this.elem.height = 200
+
+        const fanCenter: [number, number] = [center[0],170]
+        const R = 130
+        const rad = Math.PI/3
+        ctx.beginPath()
+        ctx.moveTo(...fanCenter)
+        ctx.lineTo(fanCenter[0] - R*Math.sin(rad/2), fanCenter[1] - R*Math.cos(rad/2))
+        ctx.arc(...fanCenter,R,-Math.PI/2 - rad/2, -Math.PI/2 + rad/2,false)
+        ctx.closePath()
+        ctx.strokeStyle = "#000"
+        ctx.lineWidth = 3
+        ctx.stroke() 
+        
+        ctx.textAlign = "center"
+        ctx.textBaseline = "middle"
+
+        // カウント
+        ctx.font = `50px sans-serif`
+        ctx.fillText(`${count}`, ...center)
+
+        // テキスト
+        ctx.font = '30px sans-serif'
+        ctx.fillText(text,center[0],underTextY)
     }
 }

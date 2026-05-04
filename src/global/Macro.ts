@@ -21,15 +21,20 @@ createFramesFromActionのswitch文に追加
 createPamphlet.tsにて
 class Pamph_[Name]_Cnvsを追加
 createPamphletのswitch文に追加
+スライド系なら「初期方向による強制的な方転について」の下のifの条件式にも追加する
 */
 
 export type action = {
     move: act_move
     count: MathExp.ExpressionTree
 }
-export type act_move = move_break|move_liner|move_back|move_rotate|move_revolve|move_slide|/*move_genRevolve|*/move_dyclon|move_sit|move_stand
+export type act_move = move_break|move_idle|move_liner|move_back|move_rotate|move_absRotate|move_revolve|move_slide|/*move_genRevolve|*/move_dyclon|move_sit|move_stand|move_dance|move_dance_slide|move_wave
 export type move_break = {
     type: "break"
+    text: string
+}
+export type move_idle = {
+    type: "idle"
     text: string
 }
 export type move_liner = {
@@ -44,6 +49,10 @@ export type move_rotate = {
     type: "rotate"
     rotateAngle: MathExp.ExpressionTree
 }
+export type move_absRotate = {
+    type: "absRotate"
+    rotateAngle: MathExp.ExpressionTree
+}
 export type move_revolve = {
     type: "revolve"
     center: Point
@@ -51,7 +60,8 @@ export type move_revolve = {
 }
 export type move_slide = {
     type: "slide"
-    slideIndex: MathExp.ExpressionTree
+    slideIndex: MathExp.ExpressionTree,
+    text: string
 }
 // export type move_genRevolve = {
 //     type: "genRevolve"
@@ -72,7 +82,20 @@ export type move_sit = {
 export type move_stand = {
     type: "stand"
 }
-export type moveType = "break"|"rotate"|"liner"|"back"|"revolve"|"slide"|"dyclon"|"sit"|"stand"
+export type move_dance = {
+    type: "dance"
+    text: string
+}
+export type move_dance_slide = {
+    type: "danceSlide"
+    slideIndex: MathExp.ExpressionTree
+    text: string
+}
+export type move_wave = {
+    type: "wave"
+    text: string
+}
+export type moveType = "break"|"idle"|"rotate"|"absRotate"|"liner"|"back"|"revolve"|"slide"|"dyclon"|"sit"|"stand"|"dance"|"danceSlide"|"wave"
 
 export default class Macro {
     protected _macroStr: string = ""
@@ -93,6 +116,7 @@ export default class Macro {
     get actions(): action[]{
         if(this.macroAndActsIsDiff){
             this._actions = text2Actions(this.macroStr)
+            console.log("actions",this._actions)
             this.macroAndActsIsDiff = false
         }
         return this._actions
@@ -112,39 +136,57 @@ const textReg = new RegExp(/[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠ー0-9a-zA-Z]*/)
 
 const _linerReg = new RegExp(`f(?:\{(${MathReg.source})\})?`)
 const _backReg = new RegExp(`bw(?:\{(${MathReg.source})\})?`)
-const _breakReg = new RegExp(`b(?:\{(${textReg.source})\})?`)
+const _breakReg = new RegExp(`b(?:<(${textReg.source})>)?`)
+const _idleReg = new RegExp(`i(?:<(${textReg.source})>)?`)
 const _revolveReg = new RegExp(`r([rl])\{(${MathReg.source})\}`)
-const _slideReg = new RegExp(`s\{(${MathReg.source})\}`)
+const _slideReg = new RegExp(`s(?:<(${textReg.source})>)?\{(${MathReg.source})\}`)
 const _dyclonReg = new RegExp(`dl\{(${MathReg.source})\}`)
 const _sitReg = new RegExp(`sit`)
 const _standReg = new RegExp(`std`)
+const _danceReg = new RegExp(`dc(?:<(${textReg.source})>)?`)
+const _danceSlideReg = new RegExp(`dcs(?:<(${textReg.source})>)?\{(${MathReg.source})\}`)
+const _waveReg = new RegExp(`wv(?:<(${textReg.source})>)?`)
 
-const linerReg = new RegExp(_linerReg.source + countReg.source,"g")
-const backReg = new RegExp(_backReg.source + countReg.source,"g")
-const breakReg = new RegExp(_breakReg.source + countReg.source,"g")
-const rotateReg = new RegExp(`t([rl])\{(${MathReg.source})\}`+`(?:\\[(${MathReg.source})\\])?`,"g")
-const revolveReg = new RegExp(_revolveReg.source + countReg.source,"g")
-const slideReg = new RegExp(_slideReg.source + countReg.source,"g")
-const dyclonReg = new RegExp(_dyclonReg.source + countReg.source,"g")
-const sitReg = new RegExp(_sitReg.source + countReg.source,"g")
-const standReg = new RegExp(_standReg.source + countReg.source,"g")
+const startReg = /(?<=^|[^a-zA-Z])/ // マクロの開始を判定するために使う(dcs...はs...を含んでしまう問題の解消)
 
+const linerReg        = new RegExp(startReg.source + _linerReg.source + countReg.source,"g")
+const backReg         = new RegExp(startReg.source + _backReg.source + countReg.source,"g")
+const breakReg        = new RegExp(startReg.source + _breakReg.source + countReg.source,"g")
+const idleReg         = new RegExp(startReg.source + _idleReg.source + countReg.source,"g")
+const rotateReg       = new RegExp(startReg.source + `t([rl])\{(${MathReg.source})\}`,"g")
+const absRotateReg    = new RegExp(startReg.source + `t\{(${MathReg.source})\}`,"g")
+const nctRotateReg    = new RegExp(startReg.source + `t([rl])h\{(${MathReg.source})\}`+`\\[(${MathReg.source})\\]`,"g")
+const nctAbsRotateReg = new RegExp(startReg.source + `th\{(${MathReg.source})\}`+`\\[(${MathReg.source})\\]`,"g")
+const revolveReg      = new RegExp(startReg.source + _revolveReg.source + countReg.source,"g")
+const slideReg        = new RegExp(startReg.source + _slideReg.source + countReg.source,"g")
+const dyclonReg       = new RegExp(startReg.source + _dyclonReg.source + countReg.source,"g")
+const sitReg          = new RegExp(startReg.source + _sitReg.source + countReg.source,"g")
+const standReg        = new RegExp(startReg.source + _standReg.source + countReg.source,"g")
+const danceReg        = new RegExp(startReg.source + _danceReg.source + countReg.source,"g")
+const danceSlideReg   = new RegExp(startReg.source + _danceSlideReg.source + countReg.source,"g")
+const waveReg         = new RegExp(startReg.source + _waveReg.source + countReg.source,"g")
+
+console.log(linerReg.source)
 
 function text2Actions(text: string):action[]{
     let pureText = text.replace(/[\s\t\n　]/g,"")
     const Q = new FastPriorityQueue<[RegExpExecArray,moveType]>((a,b) => {
         return a[0].index < b[0].index
     })
-    const allRegs = [linerReg,backReg,breakReg,rotateReg,revolveReg,slideReg,dyclonReg,sitReg,standReg]
-    const moveTypeNames:moveType[] = ["liner","back","break","rotate","revolve","slide","dyclon","sit","stand"]
+    const allRegs = [linerReg,backReg,breakReg,idleReg,rotateReg,absRotateReg,nctRotateReg,nctAbsRotateReg,revolveReg,slideReg,dyclonReg,sitReg,standReg,danceReg,danceSlideReg,waveReg]
+    const moveTypeNames:moveType[] = ["liner","back","break","idle","rotate","absRotate","rotate","absRotate","revolve","slide","dyclon","sit","stand","dance","danceSlide","wave"]
     allRegs.forEach((reg,i) => {
+        const name = moveTypeNames[i]
         while(1){
             const match = reg.exec(pureText)
+            if(name === "liner"){
+                console.log("match",match)
+            }
             if(match === null) break
-            const name = moveTypeNames[i]
             Q.add([match,name])
         }
     })
+    console.log("Queue",Q)
     let actions:action[] = []
     while(!Q.isEmpty()){
         const top = Q.poll()
@@ -156,6 +198,9 @@ function text2Actions(text: string):action[]{
             case "break":
                 action = matchToBreak(match)
                 break
+            case "idle":
+                action = matchToIdle(match)
+                break
             case "liner":
                 action = matchToLiner(match)
                 break
@@ -164,6 +209,9 @@ function text2Actions(text: string):action[]{
                 break
             case "rotate":
                 action = matchToRotate(match)
+                break
+            case "absRotate":
+                action = matchToAbsRotate(match)
                 break
             case "revolve":
                 action = matchToRevolve(match)
@@ -179,6 +227,15 @@ function text2Actions(text: string):action[]{
                 break
             case "stand":
                 action = matchToStand()
+                break
+            case "dance":
+                action = matchToDance(match)
+                break
+            case "danceSlide":
+                action = matchToDanceSlide(match)
+                break
+            case "wave":
+                action = matchToWave(match)
                 break
         }
         if(action === null) break
@@ -203,6 +260,23 @@ function matchToBreak(match: RegExpExecArray): action|null{
         return null
     }
 }
+function matchToIdle(match: RegExpExecArray): action|null{
+    if(match[2] === undefined) return null
+    if(match[1] === undefined) match[1] = ""
+    try{
+        const count = new MathExp.ExpressionTree(match[2])
+        return {
+            move: {
+                type: "idle",
+                text: match[1]
+            },
+            count: count
+        }
+    }catch{
+        return null
+    }
+}
+
 function matchToLiner(match: RegExpExecArray): action|null{
     if(match[2] === undefined) return null
     if(match[1] === undefined) match[1] = "3"
@@ -258,6 +332,25 @@ function matchToRotate(match: RegExpExecArray): action|null{
         return null
     }
 }
+function matchToAbsRotate(match: RegExpExecArray): action|null{
+    if(match[1] === undefined) return null
+    let count = new MathExp.ExpressionTree("0")
+    if(match[2] !== undefined){
+        count = new MathExp.ExpressionTree(match[2])
+    }
+    try{
+        const rotateAngle = new MathExp.ExpressionTree(`${match[1]}`)
+        return {
+            move: {
+                type: "absRotate",
+                rotateAngle: rotateAngle
+            },
+            count: count
+        }
+    }catch{
+        return null
+    }
+}
 function matchToRevolve(match: RegExpExecArray): action|null{
     if(match[1] === undefined || match[2] === undefined || match[3] === undefined) return null
 
@@ -277,16 +370,17 @@ function matchToRevolve(match: RegExpExecArray): action|null{
     }
 }
 function matchToSlide(match: RegExpExecArray): action|null{
-    if(match[1] === undefined || match[2] === undefined) return null
-    
+    if(match[2] === undefined || match[3] === undefined) return null
+    if(match[1] === undefined) match[1] = ""
     try{
         // match[1]はインデックスではなくスライド番号(1-based)
-        const slideIndex = new MathExp.ExpressionTree(match[1] + "-1")
-        const count = new MathExp.ExpressionTree(match[2])
+        const slideIndex = new MathExp.ExpressionTree(match[2] + "-1")
+        const count = new MathExp.ExpressionTree(match[3])
         return {
             move: {
                 type: "slide",
-                slideIndex : slideIndex
+                slideIndex : slideIndex,
+                text: match[1]
             },
             count: count
         }
@@ -324,5 +418,57 @@ function matchToStand(): action|null{
             type: "stand"
         },
         count: new MathExp.ExpressionTree("1")
+    }
+}
+function matchToDance(match: RegExpExecArray): action|null{
+    if(match[2] === undefined) return null
+    if(match[1] === undefined) match[1] = ""
+    try{
+        const count = new MathExp.ExpressionTree(match[2])
+        return {
+            move: {
+                type: "dance",
+                text: match[1]
+            },
+            count: count
+        }
+    }catch{
+        return null
+    }
+}
+function matchToDanceSlide(match: RegExpExecArray): action|null{
+    if(match[2] === undefined || match[3] === undefined) return null
+    if(match[1] === undefined) match[1] = ""
+    
+    try{
+        // match[1]はインデックスではなくスライド番号(1-based)
+        const slideIndex = new MathExp.ExpressionTree(match[2] + "-1")
+        const count = new MathExp.ExpressionTree(match[3])
+        return {
+            move: {
+                type: "danceSlide",
+                slideIndex : slideIndex,
+                text: match[1]
+            },
+            count: count
+        }
+    }catch{
+        return null
+    }
+}
+function matchToWave(match: RegExpExecArray): action|null{
+    if(match[2] === undefined) return null
+    if(match[1] === undefined) match[1] = ""
+    try{
+        const count = new MathExp.ExpressionTree(match[2])
+        return {
+            move: {
+                type: "wave",
+                text: match[1]
+            },
+            count: count
+        }
+    }catch{
+        return null
     }
 }

@@ -39,9 +39,14 @@
             & > .pamphMacroArea{
                 display: flex;
                 flex-direction: row;
+                flex-wrap: wrap;
+                gap: 3rem 0px;
                 padding: 0px 10%;
                 & canvas{
                     width: 4em;
+                }
+                & > div{
+                    display: flex;
                 }
             }
             & > .gridCanvas{

@@ -1,6 +1,5 @@
 import { createFrames } from "./CreateFrames";
 import Scene from "./Scene";
-// TODO まくろカウントOKが機能していない
 
 export default class PlayConditions {
     constructor(){
@@ -40,7 +39,7 @@ export default class PlayConditions {
         return frames?.[0].map((frame,frameNum) => {
             const posIdMap = new Map<string,number[]>()
             let overlapped = false
-            frame.forEach(({person,state}) => {
+            frame.statePersonPairs.forEach(({person,state}) => {
                 const posStr = `${state.pos.x},${state.pos.y}`
                 const idArr = posIdMap.get(posStr) || []
                 if(idArr.length > 0) overlapped = true

@@ -27,7 +27,7 @@ export default class TmpCanvas extends Narve.Component<HTMLCanvasElement> {
         this.clearAll()
         this.drawGrid()
         this.drawTrace(sceneFrames,focusedPerson)
-        frame.forEach(({state,person}) => {
+        frame.statePersonPairs.forEach(({state,person}) => {
             this.plot(state.pos.add(this.adjustDiff),
                 state.rotateAngle,
                 person === focusedPerson,
@@ -158,7 +158,7 @@ export default class TmpCanvas extends Narve.Component<HTMLCanvasElement> {
     }
     drawTrace(sceneFrames: sceneFrames,focusedPerson: Person){
         const personalStates = sceneFrames.map(frame => {
-            return frame.find(({person}) => person === focusedPerson)
+            return frame.statePersonPairs.find(({person}) => person === focusedPerson)
         })
         if(!personalStates.every(v => v !== undefined)) return
         personalStates.forEach(({state},i) => {

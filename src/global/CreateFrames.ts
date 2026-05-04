@@ -46,7 +46,12 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
 
     const countNum = maxCount
     const frameNum = fpc * countNum + (closeSegment?1:0)
-    let sceneFrames: sceneFrames = Array(frameNum).fill(0).map(_ => [])
+    let sceneFrames: sceneFrames = Array(frameNum).fill(0).map(_ => {
+        return {
+            isSubFrame: false, // TODO ここのtrue/falseを頑張る
+            statePersonPairs: []
+        }
+    })
     try{ // sceneFramesの長さが十分でないときにエラーを吐くので、それの対策
         persons.forEach((person,debug) => {
             const slides = scene.slides
@@ -54,11 +59,14 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
             if(person.macroIndex === undefined) return
             if(person.startState === undefined) return
             let curState = person.startState.clone()
-            let personalFrames:frame = []
+            let personalFrames:frame = {
+                isSubFrame: false,
+                statePersonPairs: []
+            }
             scene.macros[person.macroIndex].actions.forEach(action => {
                 const [frames,newState] = createFramesFromAction(action,curState,fpc,slides,person)
                 if(debug === 0) console.log("frames",frames)
-                personalFrames.push(...frames.map(state => {
+                personalFrames.statePersonPairs.push(...frames.map(state => {
                     return {
                         state: state.clone(),
                         person: person
@@ -68,33 +76,33 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
             })
 
             // createFramesFromActionの返値は右半開区間だが、向き修正のために閉区間にする
-            personalFrames.push({
+            personalFrames.statePersonPairs.push({
                 state: curState.clone(),
                 person: person
             })
             // 向きを進行方向に修正
-            for(let i = 0;i < personalFrames.length-1;i++){
+            for(let i = 0;i < personalFrames.statePersonPairs.length-1;i++){
                 // 次フレームへの移動があるかつ、方向がNaNならその方向を向く
                 // 無ければ触らず、もともと設定されていた向きを向く
-                const vec = new PointDiff(...personalFrames[i+1].state.pos.sub(personalFrames[i].state.pos).getPair())
-                if(vec.length() > 0.0001 && Number.isNaN(personalFrames[i].state.rotateAngle)){ // 移動していればかつ方向がNaNなら
-                    personalFrames[i].state.rotateAngle = vec.angle()
+                const vec = new PointDiff(...personalFrames.statePersonPairs[i+1].state.pos.sub(personalFrames.statePersonPairs[i].state.pos).getPair())
+                if(vec.length() > 0.0001 && Number.isNaN(personalFrames.statePersonPairs[i].state.rotateAngle)){ // 移動していればかつ方向がNaNなら
+                    personalFrames.statePersonPairs[i].state.rotateAngle = vec.angle()
                 }
             }
             // 閉区間にするべきシーン(最後のシーン)以外では最後のカウントを消し、右半開区間にする
-            if(!closeSegment) personalFrames.pop()
+            if(!closeSegment) personalFrames.statePersonPairs.pop()
             
             // posを整数値に直す
-            personalFrames = personalFrames.map(({state,person}) => {
+            personalFrames.statePersonPairs = personalFrames.statePersonPairs.map(({state,person}) => {
                 return {
                     state: new PersonState(state.pos,state.rotateAngle),
                     person: person
                 }
             })
             // 全体のやつに追加
-            personalFrames.forEach((pair,f) => {
+            personalFrames.statePersonPairs.forEach((pair,f) => {
                 if(sceneFrames[f] === undefined) throw new Error(`The length of sceneFrames is not enough. Please estimate enough frameNum. currentFrame is ${f}, but the length of sceneFrames is ${sceneFrames.length}`)
-                sceneFrames[f].push(pair)
+                sceneFrames[f].statePersonPairs.push(pair)
             })
             if(debug === 6)console.log("personalFrames", personalFrames)
         })
@@ -106,11 +114,14 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
 }
 
 export function createFirstFrame(scene: Scene): frame{
-    return scene.persons.map(person => {
-        if(person.startState === undefined) return null
-        return {
-            state: person.startState,
-            person: person
-        }
-    }).filter(v => v !== null)
+    return {
+        isSubFrame: false,
+        statePersonPairs: scene.persons.map(person => {
+            if(person.startState === undefined) return null
+            return {
+                state: person.startState,
+                person: person
+            }
+        }).filter(v => v !== null)
+    }
 }

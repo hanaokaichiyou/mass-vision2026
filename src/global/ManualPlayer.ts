@@ -23,7 +23,7 @@ export default class ManualPlayer {
                 this.personsCanvas.clearAll()
                 const frame = sceneFrames[curSceneIndex]?.[f]
                 if(frame === undefined) return
-                frame.forEach(({state,person}) => {
+                frame.statePersonPairs.forEach(({state,person}) => {
                     this.personsCanvas.plot(state,person.colorIndex)
                     person.state = state.clone()
                 })

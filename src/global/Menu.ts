@@ -2,7 +2,7 @@ import { CheckMenuItem, Menu, MenuItem, Submenu } from "@tauri-apps/api/menu"
 import App from "../App"
 import { openDlg_open_music, openDlg_read_msvi, openDlg_write_msvi } from "./fileOperations"
 import { saveDataToScenes, scenesToSaveData } from "./CreateSaveData"
-import { createPamphlet } from "../components/pamphlet/createPamphlet"
+import { createPamphlet, PamphMode } from "../components/pamphlet/createPamphlet"
 import PlayConditions from "./playConditions"
 import { message } from "@tauri-apps/plugin-dialog"
 
@@ -33,12 +33,31 @@ export default async function createMenu(app: App){
                 accelerator: "Ctrl+S",
                 action: () => menuFunctions.save(app)
             },
-            {
-                id: "print",
+            await Submenu.new({
                 text: "印刷",
-                accelerator: "Ctrl+P",
-                action: () => menuFunctions.print(app)
-            }
+                items: [
+                    {
+                        id: "printMoonFlag",
+                        text: "月旗",
+                        action: () => menuFunctions.print(app,"MoonFlag")
+                    },
+                    {
+                        id: "printMoonFemale",
+                        text: "月女",
+                        action: () => menuFunctions.print(app,"MoonFemale")
+                    },
+                    {
+                        id: "printSunShield",
+                        text: "太陽盾",
+                        action: () => menuFunctions.print(app,"SunShield")
+                    },
+                    {
+                        id: "printSunFemale",
+                        text: "赤女",
+                        action: () => menuFunctions.print(app,"SunFemale")
+                    }
+                ]
+            }),
         ]
     })
     const sceneList = await Submenu.new({
@@ -204,7 +223,12 @@ export default async function createMenu(app: App){
             app.edit.editField.fixLayerCenter()
         }
     })
+    const scrollAllow = await Submenu.new({
+        text: "画面固定",
+        items: [lockAndRelease,centering]
+    })
 
+    // スロー設定
     const justSeg = await CheckMenuItem.new({
         id: "justSeg",
         text: "区間のみスロー",
@@ -230,11 +254,10 @@ export default async function createMenu(app: App){
         items: [justSeg,segPlus1]
     })
 
+    // 印刷モード設定
+    // FROM
 
-    const scrollAllow = await Submenu.new({
-        text: "画面固定",
-        items: [lockAndRelease,centering]
-    })
+
     const menu = await Menu.new({
         items: [
             fileMenu,
@@ -318,7 +341,7 @@ export namespace menuFunctions {
             ))
         }
     }
-    export const print = (app: App) => {
+    export const print = (app: App,mode: PamphMode) => {
         const ok = app.scenes.every((scene,i) => {
             if(!PlayConditions.macroOk(scene)){
                 message(`シーン${i+1}にマクロが設定されていない人がいます。`)
@@ -336,7 +359,7 @@ export namespace menuFunctions {
         })
         if(ok){
             app.resetId(0)
-            const p = createPamphlet(app.scenes,app.edit.rightPanel.pamphSettings.checkeds)
+            const p = createPamphlet(app.scenes,app.edit.rightPanel.pamphSettings.checkeds,mode)
             app.pamphElem.children.set(p)
             console.log(p)
             window.print()

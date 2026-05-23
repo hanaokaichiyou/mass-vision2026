@@ -29,7 +29,7 @@
                 border-color: #00a2ff;
             }
         }
-        &  div{
+        & > div{
             height: 100%;
             width: 100%;
         }

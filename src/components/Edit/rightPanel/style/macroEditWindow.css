@@ -20,4 +20,8 @@
         height: 1em;
         border-radius: 50%;
     }
+    & .reverseMacroArea {
+        height: fit-content;
+        padding: 1rem;
+    }
 }

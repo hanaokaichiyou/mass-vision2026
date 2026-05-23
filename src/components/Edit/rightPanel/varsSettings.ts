@@ -2,9 +2,10 @@ import { Narve, nr } from "narve";
 import "./style/varsSettings.css"
 import { massCanvasDef as ms } from "../../../global/massCanvasDef";
 import Person from "../../../global/Person";
+import RightPanel from "../rightPanel";
 
 export default class VarsSettings extends Narve.Component {
-    applyBtn = nr("button",{},"変数適用")
+    // applyBtn = nr("button",{},"変数適用")
     varNameSelect = nr<HTMLSelectElement>("select",{},
         ...Object.keys(ms.defVars()).map(varName => 
             nr("option",{},varName)
@@ -13,12 +14,15 @@ export default class VarsSettings extends Narve.Component {
     private valInput = nr<HTMLInputElement>("input",{type: "number"})
     private incInput = nr<HTMLInputElement>("input",{type: "number",value: 1})
 
-    varDispBtn = nr("button",{},"変数確認")
-    varDispTBody = nr("tbody")
-    constructor(){
+    // varDispBtn = nr("button",{},"変数確認")
+    // varDispTBody = nr("tbody")
+
+    parent: RightPanel
+    constructor(parent: RightPanel){
         super()
+        this.parent = parent
         this.children.set(
-            this.applyBtn,
+            // this.applyBtn,
             nr("table",{class: "varsSettingsTable"},
                 nr("tr",{},
                     nr("th",{},"変数名"),
@@ -31,16 +35,16 @@ export default class VarsSettings extends Narve.Component {
                     nr("td",{},this.incInput),
                 )
             ),
-            this.varDispBtn,
-            nr("table",{class: "varsSettingsTable"},
-                nr("thead",{},nr("tr",{},
-                    nr("th",{},"変数名"),
-                    nr("th",{},"値"),
-                )),
-                this.varDispTBody
-            )
+            // this.varDispBtn,
+            // nr("table",{class: "varsSettingsTable"},
+            //     nr("thead",{},nr("tr",{},
+            //         nr("th",{},"変数名"),
+            //         nr("th",{},"値"),
+            //     )),
+            //     this.varDispTBody
+            // )
         )
-        this.applyBtn.elem.onclick = () => this.onApplyBtnClicked()
+        // this.applyBtn.elem.onclick = () => this.onApplyBtnClicked()
         this.varNameSelect.elem.onchange = _ => {
             const varName = this.getVarName()
             if(varName === null) return
@@ -48,14 +52,12 @@ export default class VarsSettings extends Narve.Component {
         }
     }
     dispPersonVars(person: Person){
-        this.varDispTBody.children.set(
-            ...Object.entries(person.variables).map(([varName,val]) => 
-                new VarRow(varName,val)
-            )
-        )
-    }
-    onApplyBtnClicked(){
-        // define in project://src/components/Edit.ts
+        person
+        // this.varDispTBody.children.set(
+        //     ...Object.entries(person.variables).map(([varName,val]) => 
+        //         new VarRow(varName,val)
+        //     )
+        // )
     }
     onVarNameSelectChanged(varName: ms.VariableName){
         varName // define in project://src/components/Edit.ts
@@ -82,6 +84,23 @@ export default class VarsSettings extends Narve.Component {
         }else{
             return null
         }
+    }
+    display(display?: string): void {
+        super.display(display)
+        this.parent.parent.currentIdMode = "var"
+        this.parent.parent.drawFirstFrame()
+        this.onDisplay()
+    }
+    hide(): void {
+        super.hide()
+        this.parent.parent.currentIdMode = "id"
+        this.parent.parent.drawFirstFrame()
+        this.onHide()
+    }
+    onDisplay(){
+        // defined in project://src/components/Edit.ts
+    }
+    onHide(){
     }
 }
 export class VarRow extends Narve.Component<HTMLTableRowElement> {

@@ -91,7 +91,7 @@ export default class Player {
 
             const start = Date.now()
             let curSceneIndex = 0
-            let f = 0 // 表示されるフレームナンバー
+            let f = 0 // 表示されるフレームインデックス
             let i = 0 // 補フレームを含めたフレームのインデックス
             
             this.pause = ()=>{
@@ -108,8 +108,8 @@ export default class Player {
                 const frame = sceneFramess[curSceneIndex]?.[i]
                 if(frame === undefined) return
                 
-                frame.statePersonPairs.forEach(({state,person}) => {
-                    this.personsCanvas.plot(state,person.colorIndex)
+                frame.statePersonPairs.forEach(({state,person,isLarge}) => {
+                    this.personsCanvas.plot(state,person.colorIndex,undefined,isLarge)
                     person.state = state.clone()
                 })
                 if(f%fpc === 0){

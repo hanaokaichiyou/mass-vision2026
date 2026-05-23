@@ -121,6 +121,10 @@ export default class App extends Narve.Component {
         }
         this.edit.rightPanel.idWindow.onSceneIndexChanged(this.currentSceneIdx,this.scenes)
     }
+    setAudioSrc(src: string,fileName: string){
+        this.musicPlayer.setSrc(src)
+        this.edit.bottomPanel.timeLine.musicBar.setFileName(fileName)
+    }
     addSceneBefore(){
         let index: number = this.scenes.findIndex(scene => scene === this.edit.scene)
         if(index === -1) throw Error("Couldn't find the current scene.")
@@ -353,7 +357,8 @@ export default class App extends Narve.Component {
             }
         }
 
-        const sceneFrames = createFrames(this.scenes,1,startSceneNum,startSceneNum)
+        const fpc = 1
+        const sceneFrames = createFrames(this.scenes,fpc,startSceneNum,startSceneNum)
         if(sceneFrames === null){
             this.playing = false
             return
@@ -379,7 +384,7 @@ export default class App extends Narve.Component {
             }
             // this.musicPlayer.play()
             await this.player.play(
-                1,
+                fpc,
                 this.defaultCpm,
                 sceneFrames,
                 startSceneNum||0,

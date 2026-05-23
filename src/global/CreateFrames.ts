@@ -52,7 +52,7 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
             statePersonPairs: []
         }
     })
-    try{ // sceneFramesの長さが十分でないときにエラーを吐くので、それの対策
+    try{ // sceneFramesの長さが十分でないときにエラーを吐いて停止してしまうので、エラーを吐きつつ停止させないようにするためのtry
         persons.forEach((person,debug) => {
             const slides = scene.slides
             // 以下二つはあり得ない
@@ -69,7 +69,11 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
                 personalFrames.statePersonPairs.push(...frames.map(state => {
                     return {
                         state: state.clone(),
-                        person: person
+                        person: person,
+                        isLarge: (
+                            action.move.type === "absRotate" || 
+                            action.move.type === "rotate"
+                        ) && action.count.evaluate(person.variables) > 0
                     }
                 }))
                 curState = newState.clone()
@@ -93,10 +97,10 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
             if(!closeSegment) personalFrames.statePersonPairs.pop()
             
             // posを整数値に直す
-            personalFrames.statePersonPairs = personalFrames.statePersonPairs.map(({state,person}) => {
+            personalFrames.statePersonPairs = personalFrames.statePersonPairs.map(v => {
                 return {
-                    state: new PersonState(state.pos,state.rotateAngle),
-                    person: person
+                    ...v,
+                    state: new PersonState(v.state.pos,v.state.rotateAngle),
                 }
             })
             // 全体のやつに追加

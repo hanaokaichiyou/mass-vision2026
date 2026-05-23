@@ -57,7 +57,7 @@ export function scenesToSaveData(scenes: Scene[],colorFill: boolean[],defaultCPM
       colorFills: colorFill
     },
     defaultCPM: defaultCPM,
-    startCounts: startCounts
+    startCounts: startCounts,
   }
 }
 export function saveDataToScenes(saveData: saveData_t): Scene[] {

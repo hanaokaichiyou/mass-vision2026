@@ -11,10 +11,13 @@ export default class MacroEditWindow extends Narve.Component {
     macroIndexSelect = nr<HTMLSelectElement>("select")
     macroColorDiv = nr("div",{class: "macroColorDiv"})
     editBtn = nr("button",{},"1．編集")
-    applyMacroBtn = nr("button",{},"2．マクロを適用")
-    applyReverseMacroBtn = nr("button",{},"3．ダッシュマクロを適用")
+    // applyMacroBtn = nr("button",{},"2．マクロを適用")
+    // applyReverseMacroBtn = nr("button",{},"2．ダッシュマクロを適用")
+    reverseMacroCheckBox = nr<HTMLInputElement>("input",{type: "checkbox",id: "reverseMacroCheckBox"})
+    reverseMacroLabel = nr("label",{for: "reverseMacroCheckBox"},"2. ダッシュマクロ")
+    reverseMacroArea = nr("div",{class: "reverseMacroArea"},this.reverseMacroCheckBox,this.reverseMacroLabel)
     macroDisp = nr("p")
-    addMacroBtn = nr("button",{},"4．+　マクロを追加")
+    addMacroBtn = nr("button",{},"3．+　マクロを追加")
     scene: Scene|undefined
 
     parent: RightPanel
@@ -26,18 +29,18 @@ export default class MacroEditWindow extends Narve.Component {
             this.macroColorDiv,
             this.macroDisp,
             this.editBtn,
-            this.applyMacroBtn,
-            this.applyReverseMacroBtn,
+            // this.applyReverseMacroBtn,
+            this.reverseMacroArea,
             this.addMacroBtn
         )
-        this.applyMacroBtn.hide()
-        this.applyReverseMacroBtn.hide()
+        // this.applyReverseMacroBtn.hide()
         this.macroDisp.hide()
         this.editBtn.hide()
 
         this.addMacroBtn.elem.onclick = () => this.addNewMacro()
         this.editBtn.elem.onclick = () => this.startEditMacro(this.macroIndexSelect.elem.selectedIndex)
         this.macroIndexSelect.elem.onchange = () => this.setMacroIndex(this.macroIndexSelect.elem.selectedIndex)
+        this.reverseMacroCheckBox.elem.onchange = () =>  this.restartApplyMacro()
     }
     setScene(scene: Scene){
         this.scene = scene
@@ -52,8 +55,7 @@ export default class MacroEditWindow extends Narve.Component {
                 nr("option",{value: index},`マクロ${index+1}`)
             )
         )        
-        this.applyMacroBtn.hide()
-        this.applyReverseMacroBtn.hide()
+        // this.applyReverseMacroBtn.hide()
         this.macroDisp.hide()
         this.editBtn.hide()
         this.macroColorDiv.hide()
@@ -66,8 +68,7 @@ export default class MacroEditWindow extends Narve.Component {
         this.macroDisp.setInnerText(macroStr||"未定義のマクロ")
         this.macroDisp.display()
         this.editBtn.display()
-        this.applyMacroBtn.display()
-        this.applyReverseMacroBtn.display()
+        // this.applyReverseMacroBtn.display()
 
         this.macroColorDiv.elem.style.backgroundColor = ""
             this.macroColorDiv.elem.style.borderWidth = "0px"
@@ -86,8 +87,7 @@ export default class MacroEditWindow extends Narve.Component {
 
         this.macroDisp.hide()
         this.editBtn.hide()
-        this.applyMacroBtn.hide()
-        this.applyReverseMacroBtn.hide()
+        // this.applyReverseMacroBtn.hide()
 
         const curStr = this.scene.macros[index].macroStr
         const newStr 
@@ -145,20 +145,42 @@ export default class MacroEditWindow extends Narve.Component {
     getFocusingMacroIndex(){
         return this.macroIndexSelect.elem.selectedIndex
     }
+    restartApplyMacro(){
+        // define in project://src/components/Edit.ts
+    }
     pushUndo(...func: UndoFunc[]){
         func// define in project://src/App.ts
     }
     display(display?: string): void {
         super.display(display)
-        this.onDisplay()
-    }
-    onDisplay(){
+        this.parent.parent.currentIdMode = "macro"
         setNumKeyOperations([
             undefined,
             this.editBtn,
-            this.applyMacroBtn,
-            this.applyReverseMacroBtn,
+            // this.applyReverseMacroBtn,
+            this.reverseMacroCheckBox,
             this.addMacroBtn,
-        ].map(nar => nar?() => nar.elem.focus() : undefined))
+        ].map(nar => {
+            if(nar === this.reverseMacroCheckBox){
+                return () => {
+                    this.reverseMacroCheckBox.elem.checked = !this.reverseMacroCheckBox.elem.checked
+                    this.restartApplyMacro()
+                }
+            }else{
+                return nar?() => nar.elem.focus() : undefined
+            }
+        }))
+        this.onDisplay()
+    }
+    hide(){
+        super.hide()
+        this.parent.parent.currentIdMode = "id"
+        this.parent.parent.drawFirstFrame()
+        this.onHide()
+    }
+    onDisplay(){
+        // defined in project://src/components/Edit.ts
+    }
+    onHide(){
     }
 }

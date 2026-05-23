@@ -294,10 +294,11 @@ export default class UICanvas extends MassCanvas {
         if(this.ctx === null) return
         // 普通に白色で人を書く
         const r = ms.personMarkerR
-        this.ctx.beginPath()
-        this.ctx.fillStyle = ms.macroMarkDefColor
-        this.ctx.arc(...pos.getPair(),r,0,2*Math.PI)
-        this.ctx.fill()
+        // this.ctx.beginPath()
+        // this.ctx.fillStyle = ms.macroMarkDefColor
+        // this.ctx.arc(...pos.getPair(),r,0,2*Math.PI)
+        // this.ctx.fill()
+
         if(macroIndex === undefined) return
         
         let bigIndex = false
@@ -318,13 +319,13 @@ export default class UICanvas extends MassCanvas {
         if(bigIndex) this.ctx.fill()
         else this.ctx.stroke()
 
-        if(macroIndex !== undefined){
-            this.ctx.textAlign = "center"
-            this.ctx.textBaseline = "middle"
-            this.ctx.font = `${this.quarity / 3}px sans-serif`
-            this.ctx.fillStyle = "#000"
-            this.ctx.fillText((macroIndex+1).toString(),...pos.getPair())
-        }
+        // if(macroIndex !== undefined){
+        //     this.ctx.textAlign = "center"
+        //     this.ctx.textBaseline = "middle"
+        //     this.ctx.font = `${this.quarity / 3}px sans-serif`
+        //     this.ctx.fillStyle = "#000"
+        //     this.ctx.fillText((macroIndex+1).toString(),...pos.getPair())
+        // }
     }
     drawPersonsMacroMarkers(persons: Person[]){
         this.clearAll()

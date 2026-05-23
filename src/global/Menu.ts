@@ -292,7 +292,7 @@ export default async function createMenu(app: App){
 export namespace menuFunctions {
     // fileMenu
     export const open = (app: App) => {
-        openDlg_read_msvi().then(saveData => {
+        openDlg_read_msvi().then(async saveData => {
             if(saveData === null) return
             const scenes = saveDataToScenes(saveData)
             app.edit.bottomPanel.timeLine.startCounts = {
@@ -303,7 +303,6 @@ export namespace menuFunctions {
             app.setScenes(scenes)
             app.edit.rightPanel.pamphSettings.checkeds = saveData.pamphSettings?.colorFills||[]
             app.setDefaultCpm(saveData.defaultCPM || 180)
-            
         })
     }
     export const openMusic = async (app: App) => {
@@ -312,8 +311,7 @@ export namespace menuFunctions {
             message("音楽ファイルが正しく読み込まれませんでした。")
             return
         }
-        app.musicPlayer.setSrc(src)
-        app.edit.bottomPanel.timeLine.musicBar.setFileName(fileName)
+        app.setAudioSrc(src,fileName)
     }
     export const save = (app: App) => {
         const ok = app.scenes.every((scene,i) => {
@@ -332,12 +330,12 @@ export namespace menuFunctions {
             return true
         })
         if(ok){
-            console.log("menu startCOunts",{...app.edit.bottomPanel.timeLine.startCounts})
+            console.log("menu startCounts",{...app.edit.bottomPanel.timeLine.startCounts})
             openDlg_write_msvi(scenesToSaveData(
                 app.scenes,
                 app.edit.rightPanel.pamphSettings.checkeds,
                 app.defaultCpm,
-                app.edit.bottomPanel.timeLine.startCounts,
+                app.edit.bottomPanel.timeLine.startCounts
             ))
         }
     }

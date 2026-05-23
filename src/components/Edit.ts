@@ -17,6 +17,7 @@ import simLastState from "../global/simLastState";
 import { solveSimulEq } from "../global/simulEqSolver";
 import TopPanel from "./Edit/topPanel";
 import BottomPanel from "./Edit/bottomPanel";
+import { IdMode } from "./canvas/personsCanvas";
 
 export default class Edit extends Narve.Component {
     scene: Scene
@@ -27,6 +28,9 @@ export default class Edit extends Narve.Component {
     leftPanel = new LeftPanel()
     rightPanel = new RightPanel(this)
     bottomPanel = new BottomPanel()
+
+    currentIdMode: IdMode = "id"
+    focusingVarName: ms.VariableName = "g"
 
     constructor(_scene: Scene,sceneNum: number){
         super("div",{class: "edit"})
@@ -40,25 +44,21 @@ export default class Edit extends Narve.Component {
             this.leftPanel.setHoveringPoint(pos)
         }
 
-        this.rightPanel.cancelAll = () => {
-            this.editField.uiCanvas.cancel()
-            this.leftPanel.clear()
-            this.editField.uiCanvas.clearAll()
-        }
-        this.rightPanel.macroEditWindow.drawMacro = () => this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
+        this.rightPanel.cancelAll = () => this.cancelAll()
+        this.rightPanel.macroEditWindow.drawMacro = () => this.drawMacro()
         this.rightPanel.macroEditWindow.startInputMacro = d => this.bottomPanel.startInputMacro(d)
 
         // 配置ボタンたち
-        this.rightPanel.deployBtns.pointBtn.elem.onclick    = async ()=>{while(await this.startPointDeploy());}
-        this.rightPanel.deployBtns.lineBtn.elem.onclick     = ()=>this.startLineDeploy()
-        this.rightPanel.deployBtns.rectBtn.elem.onclick     = ()=>this.startRectDeploy()
-        this.rightPanel.deployBtns.circleBtn.elem.onclick   = ()=>this.startCircleDeploy()
-        this.rightPanel.deployBtns.distanceBtn.elem.onclick = ()=>this.startDistanceDeploy()
-        this.rightPanel.deployBtns.removeBtn.elem.onclick   = async ()=>{while(await this.startRemovePerson());}
-        this.rightPanel.deployBtns.recycleBtn.elem.onclick  = ()=>this.recycle()
-        this.rightPanel.deployBtns.alignBtn.elem.onclick    = async ()=>{while(await this.align());}
-        this.rightPanel.deployBtns.copyAndPaste.elem.onclick= async ()=>{while(await this.startCopyAndPaste());}
-        this.rightPanel.deployBtns.cutAndPaste.elem.onclick = async ()=>{while(await this.startCopyAndPaste(true));}
+        this.rightPanel.deployBtns.pointBtn.elem.onclick     = async ()=>{while(await this.startPointDeploy());}
+        this.rightPanel.deployBtns.lineBtn.elem.onclick      = ()=>this.startLineDeploy()
+        this.rightPanel.deployBtns.rectBtn.elem.onclick      = ()=>this.startRectDeploy()
+        this.rightPanel.deployBtns.circleBtn.elem.onclick    = ()=>this.startCircleDeploy()
+        this.rightPanel.deployBtns.distanceBtn.elem.onclick  = ()=>this.startDistanceDeploy()
+        this.rightPanel.deployBtns.removeBtn.elem.onclick    = async ()=>{while(await this.startRemovePerson());}
+        this.rightPanel.deployBtns.recycleBtn.elem.onclick   = ()=>this.recycle()
+        this.rightPanel.deployBtns.alignBtn.elem.onclick     = async ()=>{while(await this.align());}
+        this.rightPanel.deployBtns.copyAndPaste.elem.onclick = async ()=>{while(await this.startCopyAndPaste());}
+        this.rightPanel.deployBtns.cutAndPaste.elem.onclick  = async ()=>{while(await this.startCopyAndPaste(true));}
 
         this.rightPanel.deployBtns.symmetryWindow.onSymmetryLineClicked = (theta,mode) => this.startSymmetry(theta,mode)
         this.rightPanel.deployBtns.symmetryWindow.oBtn.elem.onclick = () => this.startSymmetryO()
@@ -69,8 +69,13 @@ export default class Edit extends Narve.Component {
         this.rightPanel.rootMenu.rotateAngleBtn.elem.onclick = async ()=>{while(await this.startSetRotateAngle());}
         this.rightPanel.rootMenu.specialRotateAngleBtn.elem.onclick = async ()=>{while(await this.startSetSpecialRotateAngle());}
         
-        this.rightPanel.macroEditWindow.applyMacroBtn.elem.onclick = async ()=>{while(await this.startApplyMacro(false));}
-        this.rightPanel.macroEditWindow.applyReverseMacroBtn.elem.onclick = async ()=>{while(await this.startApplyMacro(true));}
+        this.rightPanel.macroEditWindow.onDisplay = async ()=>{
+            while(await this.startApplyMacro());
+        }
+        this.rightPanel.macroEditWindow.restartApplyMacro = async ()=>{
+            await this.cancelAll()
+            while(await this.startApplyMacro());
+        }
  
         this.rightPanel.slideEditWindow.drawSlide = slide => {
             this.editField.uiCanvas.clearAll()
@@ -97,16 +102,24 @@ export default class Edit extends Narve.Component {
         this.rightPanel.slideEditWindow.rootMenu.linkBtn.elem.onclick = async ()=>{while(await this.startLink());}
 
         // 色
-        this.rightPanel.setColorIndexWindow.applyBtn.elem.onclick = async ()=>{while(await this.startApplyColor());}
+        this.rightPanel.setColorIndexWindow.applyBtn.elem.onclick = async ()=>{
+            while(await this.startApplyColor());
+        }
 
         // 番号
         this.rightPanel.idWindow.onResetIdBtnClicked = (targetSceneIndex)=>this.resetId(targetSceneIndex)
         this.rightPanel.idWindow.checkIdBtn.elem.onclick = async ()=>{while(await this.startCheckId());}
 
         // 変数
-        this.rightPanel.varsSettings.onApplyBtnClicked = async ()=>{while(await this.startApplyVars());}
-        this.rightPanel.varsSettings.onVarNameSelectChanged = varName => this.editField.uiCanvas.drawPersonsVarMarkers(this.scene.persons,varName)
-        this.rightPanel.varsSettings.varDispBtn.elem.onclick = async ()=>{while(await this.startCheckVars());}
+        this.rightPanel.varsSettings.onDisplay = async ()=>{while(await this.startApplyVars());}
+        this.rightPanel.varsSettings.onVarNameSelectChanged = async varName => {
+            await this.cancelAll()
+            this.focusingVarName = varName
+            this.drawFirstFrame()
+            this.editField.uiCanvas.drawPersonsVarMarkers(this.scene.persons,varName)
+            while(await this.startApplyVars());
+        }
+        // this.rightPanel.varsSettings.varDispBtn.elem.onclick = async ()=>{while(await this.startCheckVars());}
         
     }
     setScene(scene: Scene, sceneIndex: number){
@@ -570,14 +583,26 @@ export default class Edit extends Narve.Component {
         })
         return true
     }
-    async startApplyMacro(reverseFlag: boolean){
+    async startApplyMacro(){
         this.editField.uiCanvas.cancel()
         this.leftPanel.clear()
         this.leftPanel.setModeDispStr("マクロ適用")
-        const persons = await this.startSelectRangePersons(`${reverseFlag?"ダッシュ":""}マクロを適用する範囲を指定してください`)
+        
+        const reverseFlag = this.rightPanel.macroEditWindow.reverseMacroCheckBox.elem.checked
+        
+        const onRangeChange = () => {
+            this.drawFirstFrame()
+        }
+        this.drawMacro()
+        const persons = await this.startSelectRangePersons(
+            `${reverseFlag?"ダッシュ":""}マクロを適用する範囲を指定してください`,
+            false,
+            onRangeChange,onRangeChange
+        )
         this.editField.uiCanvas.clearAll()
         if(persons === undefined) return false
         this.leftPanel.clear()
+        
         const newMacroIndex = this.rightPanel.macroEditWindow.getFocusingMacroIndex()
         const person_macroIndex_reverseFlagPair: [Person,number|undefined,boolean][] = persons.map(person => [person,person.macroIndex,person.reverseFlag])
         persons.forEach(person => {
@@ -604,42 +629,66 @@ export default class Edit extends Narve.Component {
         return true
     }
     onMacroApplied(){
+        this.drawFirstFrame()
         this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
         this.bottomPanel.setScene(this.scene,this.sceneIndex)
     }
     async startApplyVars(){
+        this.editField.uiCanvas.cancel()
+        this.leftPanel.clear()
+        this.leftPanel.setModeDispStr("変数適用")
+        const persons = await this.startSelectRangeOrPickupPerson("変数を適用する範囲を指定してください")
+        
         const varName = this.rightPanel.varsSettings.getVarName()
         const value = this.rightPanel.varsSettings.getValue()
         const inc = this.rightPanel.varsSettings.getInc()
         if(varName === null || value === null || inc === null) return false
-        this.editField.uiCanvas.cancel()
-        this.leftPanel.clear()
-        this.leftPanel.setModeDispStr("変数適用")
-        const persons = await this.startSelectRangePersons("変数を適用する範囲を指定してください")
         this.editField.uiCanvas.clearAll()
         if(persons === undefined) return false
+        console.log("persons",persons,value,inc)
         this.leftPanel.clear()
-        const person_varsPair: [Person,ms.Variables][] = persons.map(person => [person,person.variables])
-        persons.forEach((person,i) => {
-            person.variables[varName] = value + inc*i
-        })
+        if(Array.isArray(persons)){
+            const person_varsPair: [Person,ms.Variables][] = persons.map(person => [person,person.variables])
+            persons.forEach((person,i) => {
+                person.variables[varName] = Math.max(value + inc*i,0)
+            })
+            this.pushUndo({
+                do: () => {
+                    persons.forEach((person,i) => {
+                        person.variables[varName] = value + inc*i
+                    })
+                    this.drawFirstFrame()
+                    this.editField.uiCanvas.drawPersonsVarMarkers(this.scene.persons,varName)
+                },
+                undo: () => {
+                    person_varsPair.forEach(([person,vars]) => {
+                        person.variables = vars
+                    })
+                    this.drawFirstFrame()
+                    this.editField.uiCanvas.drawPersonsVarMarkers(this.scene.persons,varName)
+                }
+            })
+        }else{
+            const person = persons
+            person.variables[varName]++
+            this.pushUndo({
+                do: () => {
+                    person.variables[varName]--
+                    this.drawFirstFrame()
+                    this.editField.uiCanvas.drawPersonsVarMarkers(this.scene.persons,varName)
+                },
+                undo: () => {
+                    person.variables[varName]--
+                    this.drawFirstFrame()
+                    this.editField.uiCanvas.drawPersonsVarMarkers(this.scene.persons,varName)
+                }
+            })
+        }
         this.editField.uiCanvas.clearAll()
         this.leftPanel.clear()
+        this.drawFirstFrame()
         this.editField.uiCanvas.drawPersonsVarMarkers(this.scene.persons,varName)
-        this.pushUndo({
-            do: () => {
-                persons.forEach((person,i) => {
-                    person.variables[varName] = value + inc*i
-                })
-                this.editField.uiCanvas.drawPersonsVarMarkers(this.scene.persons,varName)
-            },
-            undo: () => {
-                person_varsPair.forEach(([person,vars]) => {
-                    person.variables = vars
-                })
-                this.editField.uiCanvas.drawPersonsVarMarkers(this.scene.persons,varName)
-            }
-        })
+        
         return true
     }
     async startCheckVars(){
@@ -1215,6 +1264,58 @@ export default class Edit extends Narve.Component {
             this.leftPanel.cancel = () => resolve(undefined)
         })
     }
+    startSelectRangeOrPickupPerson(order: string,isWithRotateAngleSelect = false,onRectRangeChange?: (p:[Point,Point]) => any,onParaRangeChange?: (p:[Point,Point,Point]) => any): Promise<Person[]|Person|undefined>{
+        this.leftPanel.clear()
+        this.leftPanel.order(order)
+        const clearEvents = () => {
+            this.leftPanel.onRectRangeStart = ()=>{}
+            this.leftPanel.onParaRangeStart = ()=>{}
+        }
+        return new Promise(resolve => {
+            this.leftPanel.onRectRangeStart = async () => {
+                this.editField.uiCanvas.cancel()
+
+                const range = await this.editField.uiCanvas.getRect(onRectRangeChange)
+                if(range === null) {
+                    // resolve(undefined)
+                    return
+                }
+                if(range[0].distance(range[1]) < ms.personMarkerR){
+                    const [person] = this.nearestPerson(range[0],ms.personMarkerR)
+                    clearEvents()
+                    resolve(person)
+                }else{
+                    const persons = this.getPersonsInRect(range)
+                    clearEvents()
+                    resolve(persons)
+                }
+            }
+            this.leftPanel.onParaRangeStart = async () => {
+                this.editField.uiCanvas.cancel()
+
+                const range = await this.editField.uiCanvas.getPara(onParaRangeChange)
+                if(range === null){
+                    // resolve(undefined)
+                    return
+                }
+                if(range[0].distance(range[1]) < ms.personMarkerR && range[0].distance(range[2]) < ms.personMarkerR){
+                    const [person] = this.nearestPerson(range[0],ms.personMarkerR)
+                    clearEvents()
+                    resolve(person)
+                }else{
+                    const persons = this.getPersonsInPara(range)
+                    clearEvents()
+                    resolve(persons)
+                }
+            }
+            this.leftPanel.dispRangeSelect()
+            if(isWithRotateAngleSelect){
+                console.log("rotateAngleSelect")
+                this.leftPanel.dispRotateAngleSelect()
+            }
+            this.leftPanel.cancel = () => resolve(undefined)
+        })
+    }
     startSelectRangeDests(order: string,onRectRangeChange?: (p:[Point,Point]) => any,onParaRangeChange?: (p:[Point,Point,Point]) => any): Promise<Link[]|undefined>{
         this.leftPanel.clear()
         this.leftPanel.order(order)
@@ -1290,7 +1391,8 @@ export default class Edit extends Narve.Component {
     drawFirstFrame(){
         if(this.scene === undefined) return
         const firstFrame = createFirstFrame(this.scene)
-        this.editField.personsCanvas.drawFrame(firstFrame)
+        console.log("IDMODE",this.currentIdMode,this.focusingVarName)
+        this.editField.personsCanvas.drawFrame(firstFrame,this.currentIdMode,this.focusingVarName)
         console.log(firstFrame)
     }
     nearestPerson(point: Point,maxDist?: number): [Person|undefined,number]{
@@ -1428,6 +1530,18 @@ export default class Edit extends Narve.Component {
                 this.editField.uiCanvas.clearAll()
                 this.editField.uiCanvas.drawSlide(slide)
             }
+        })
+    }
+    drawMacro(){
+        this.drawFirstFrame()
+        this.editField.uiCanvas.drawPersonsMacroMarkers(this.scene.persons)
+    }
+    cancelAll(){
+        return new Promise<void>(resolve => {
+            this.editField.uiCanvas.cancel()
+            this.leftPanel.clear()
+            this.editField.uiCanvas.clearAll()
+            resolve()
         })
     }
     pushUndo(...func: UndoFunc[]){

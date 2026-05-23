@@ -64,9 +64,19 @@ export async function openDlg_open_music(): Promise<[string,string]|[null,null]>
           },
         ],
     })
-    if(selected){
-      const s = selected.split(/[\\\/]/)
-      const contents_u8 = await readFile(selected, { baseDir: BaseDirectory.AppConfig })
+    if(selected)
+      return open_music(selected)
+    else return [null,null]
+}
+
+/**
+ * 
+ * @returns [URL,fileName]
+ */
+export async function open_music(path: string): Promise<[string,string]|[null,null]>{
+    if(path.substring(path.length-4,path.length) === ".mp3"){
+      const s = path.split(/[\\\/]/)
+      const contents_u8 = await readFile(path, { baseDir: BaseDirectory.AppConfig })
       const blob = new Blob([contents_u8], {type: "application/octet-binary"})
       return [URL.createObjectURL(blob),s[s.length-1]]
     }

@@ -3,6 +3,7 @@ import { frame } from "../../global/Frames";
 import MassCanvas from "./massCanvas";
 import { countState } from "../../global/count";
 import PersonState from "../../global/PersonState";
+import { massCanvasDef as ms } from "../../global/massCanvasDef";
 
 export default class PersonsCanvas extends MassCanvas {
     playingInterval: NodeJS.Timeout|null = null
@@ -10,9 +11,9 @@ export default class PersonsCanvas extends MassCanvas {
         super()
     }
     
-    plot(state: PersonState,colorIndex: number,dispNumber?: number){
+    plot(state: PersonState,colorIndex: number,dispNumber?: number|undefined,isLarge?: boolean){
         if(this.ctx === null) return
-        const r = massCanvasDef.personMarkerR
+        const r = isLarge? ms.largePersonMarkerR : ms.personMarkerR
 
         this.ctx.beginPath()
         this.ctx.lineWidth = 2
@@ -37,11 +38,18 @@ export default class PersonsCanvas extends MassCanvas {
     plotAll(){
         
     }
-    drawFrame(frame: frame){
+    drawFrame(frame: frame, idMode: IdMode, varName?: ms.VariableName){
         this.clearAll()
         frame.statePersonPairs.forEach(({state,person}) => {
             person.state = state.clone()
-            this.plot(state,person.colorIndex,person.id)
+            this.plot(
+                state,
+                person.colorIndex,
+                idMode === "id" ? person.id :
+                idMode === "var"? person.variables[varName||"g"] :
+                person.macroIndex === undefined? undefined :
+                person.macroIndex + 1 
+            )
         })
     }
     
@@ -54,3 +62,5 @@ export default class PersonsCanvas extends MassCanvas {
         countState
     }
 }
+
+export type IdMode = "id"|"macro"|"var"

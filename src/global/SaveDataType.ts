@@ -65,6 +65,7 @@ export type saveDataPamphSettings_t = {
 export function isSaveData(value: any): value is saveData_t {
   if(typeof value === "object")
   if(value !== null)
+// Warning 新しい要素を追加するときはこの数字を増やす
   if(Object.keys(value).length <= 4)
   if("scenes" in value)
   if(Array.isArray(value.scenes))
@@ -80,7 +81,10 @@ export function isSaveDataScene(value: any): value is saveDataScene_t {
     if (typeof value !== "object" || value === null) {
         return false;
     }
+    
+    // Warning 新しい要素を追加するときはこの数字を増やす
     if(Object.keys(value).length > 4) return false
+    
     // macrosのチェック
     if (!Array.isArray(value.macros) || !value.macros.every(isSaveDataMacro)) {
         return false;
@@ -90,7 +94,6 @@ export function isSaveDataScene(value: any): value is saveDataScene_t {
     if (!Array.isArray(value.slides) || !value.slides.every(isSaveDataSlide)) {
         return false;
     }
-
     // personsのチェック
     if (!Array.isArray(value.persons) || !value.persons.every(isSaveDataPerson)) {
         return false;

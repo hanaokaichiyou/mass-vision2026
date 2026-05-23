@@ -197,7 +197,6 @@ export type PamphMode = "MoonFlag"|"MoonFemale"|"SunShield"|"SunFemale"
 const upperTextY = 15
 const underTextY = 185
 class Pamph_FrontWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {
-    // TODO modeに応じて書き分ける
     constructor(count: number, cpcell: number, mode: PamphMode){
         super("canvas",{class: "pamph_move"})
         const ctx = this.elem.getContext("2d")
@@ -215,16 +214,9 @@ class Pamph_FrontWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {
         let upperText = ""
         switch(mode){
             case "MoonFlag":
-                if(cpcell !== 3){
-                    underText = `1マス${cpcell}`
-                }
-                break
-
             case "SunShield":
-                // MEMO 盾って1マス2と4どっちを省略するんだっけ？
                 underText = `1マス${cpcell}`
                 break
-
             case "MoonFemale":
             case "SunFemale":
                 if(cpcell === 2){
@@ -241,7 +233,6 @@ class Pamph_FrontWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {
     }
 }
 class Pamph_BackWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {
-    // TODO modeに応じて書き分ける
     constructor(count: number, cpcell: number, mode: PamphMode){
         super("canvas",{class: "pamph_move"})
         const ctx = this.elem.getContext("2d")
@@ -259,16 +250,9 @@ class Pamph_BackWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {
         let underText = "後"
         switch(mode){
             case "MoonFlag":
-                if(cpcell !== 3){
-                    underText += `1マス${cpcell}`
-                }
-                break
-
             case "SunShield":
-                // MEMO 盾って1マス2と4どっちを省略するんだっけ？
                 underText += `1マス${cpcell}`
                 break
-
             case "MoonFemale":
             case "SunFemale":
                 if(cpcell === 2){

@@ -9,4 +9,5 @@ export type frame = {
 export type statePersonPair = {
     state: PersonState
     person: Person
+    isLarge?: boolean
 }

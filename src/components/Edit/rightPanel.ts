@@ -23,7 +23,7 @@ export default class RightPanel extends Narve.Component {
     setColorIndexWindow = new SetColorIndexWindow()
     idWindow = new IdWindow()
     pamphSettings = new PamphSettings()
-    varsSettings = new VarsSettings()
+    varsSettings = new VarsSettings(this)
 
     windows = nr("div",{class: "windows"},
         this.rootMenu,
@@ -61,6 +61,7 @@ export default class RightPanel extends Narve.Component {
             this.cancelAll()
             this.parent.leftPanel.clear()
             this.windows.switchFocus(this.rootMenu)
+            parent.drawFirstFrame()
         }
 
         this.rootMenu.deployBtn.elem.onclick = () => {
@@ -108,7 +109,7 @@ export default class RightPanel extends Narve.Component {
         this.parent.leftPanel.clear()
         this.windows.switchFocus(this.rootMenu)
     }
-    cancelAll(){
+    async cancelAll(){
         // define in project://src/components/Edit.ts
     }
 }

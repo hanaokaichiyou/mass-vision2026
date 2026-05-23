@@ -55,6 +55,7 @@ export namespace massCanvasDef {
     export const uiGoastColor = "rgba(255,255,255,0.5)"
     export const unselectablePersonMarkerColor = "#888"
     export const personMarkerR = 5
+    export const largePersonMarkerR = 8
     export const scenePagePersonMarkerR = 2
     export const selectGridMarkerColor = "#f00"
     export const selectPersonMarkerColor = "#f00"

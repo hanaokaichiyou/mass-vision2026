@@ -103,13 +103,13 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: Pamph
                         return new Pamph_AbsRotate_Cnvs(nextState.rotateAngle - curState.rotateAngle, nextState.rotateAngle, count, mode)
                     case "revolve":
                         const toAngle = curState.pos.angle(massCanvasDef.centerPx) + (action.move.revolveAngle.evaluate(person.variables) >= 0 ? -90 : 90)
-                        return new Pamph_Slide_Set_Cnvs(count,toAngle,"大回")
+                        return new Pamph_Slide_Set_Cnvs(count,toAngle,mode,"大回")
                     case "dyclon":
                         const [frames,_] = createFramesFromAction(action,curState,1,scene.slides,person)
                         const to = frames[1]?.pos || _.pos
-                        return new Pamph_Slide_Set_Cnvs(count,frames[0].pos.angle(to),"ダイクロン")
+                        return new Pamph_Slide_Set_Cnvs(count,frames[0].pos.angle(to),mode,"ダイクロン")
                     case "slide":
-                        return new Pamph_Slide_Set_Cnvs(count,nextState.rotateAngle,action.move.text)
+                        return new Pamph_Slide_Set_Cnvs(count,nextState.rotateAngle,mode,action.move.text)
                     case "sit": return new Pamph_Sit_Cnvs(count)
                     case "stand": return new Pamph_Stand_Cnvs(count)
 
@@ -137,7 +137,7 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: Pamph
                     ){ // 次シーンの最初にスライド・方転が入ると初期方向設定による強制的な方転が無視される
                         const curLastRotateAngle = simLastState(person, scene).rotateAngle
                         if(curLastRotateAngle !== nextScenesMe.startState.rotateAngle){
-                            macroElems.push(new Pamph_Force_Rotate_Cnvs(nextScenesMe.startState.rotateAngle))
+                            macroElems.push(new Pamph_Force_Rotate_Cnvs(nextScenesMe.startState.rotateAngle,mode))
                         }
                     }
                 }
@@ -442,9 +442,9 @@ class Pamph_AbsRotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
 
 // スライドによる方転とスライドの記号をセットにしたもの
 class Pamph_Slide_Set_Cnvs extends Narve.Component{
-    constructor(count: number,toAngle: number,text: string = ""){
+    constructor(count: number,toAngle: number,pamphMode: PamphMode,text: string = ""){
         super("div",{},
-            new Pamph_Force_Rotate_Cnvs(toAngle),
+            new Pamph_Force_Rotate_Cnvs(toAngle,pamphMode),
             new Pamph_Slide_Cnvs(count,text)
         )
     }
@@ -452,7 +452,7 @@ class Pamph_Slide_Set_Cnvs extends Narve.Component{
 // スライド・初期方向設定による強制的な方転を示す記号
 class Pamph_Force_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
     // 円＋方向の線
-    constructor(toAngle: number){
+    constructor(toAngle: number,pamphMode: PamphMode){
         super("canvas",{class: "pamph_spin"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
@@ -487,6 +487,7 @@ class Pamph_Force_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
         // 向きと方転角度
         ctx.font = "30px sans-serif"
         // 絶対方向
+        if(pamphMode === "MoonFemale" || pamphMode === "SunFemale")
         if(toAngle % 45 === 0){// キリが良ければ
             ctx.fillText(`t${(90 - toAngle + 360) % 360}°`,center[0],upperTextY)
         }

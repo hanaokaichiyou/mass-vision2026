@@ -66,7 +66,7 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
             scene.macros[person.macroIndex].actions.forEach(action => {
                 const [frames,newState] = createFramesFromAction(action,curState,fpc,slides,person)
                 if(debug === 0) console.log("frames",frames)
-                personalFrames.statePersonPairs.push(...frames.map(state => {
+                personalFrames.statePersonPairs.push(...frames.map((state,f) => {
                     return {
                         state: state.clone(),
                         person: person,
@@ -74,6 +74,7 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
                             action.move.type === "absRotate" || 
                             action.move.type === "rotate"
                         ) && action.count.evaluate(person.variables) > 0
+                        && f > 0
                     }
                 }))
                 curState = newState.clone()

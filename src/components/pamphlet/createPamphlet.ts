@@ -12,8 +12,6 @@ import PointDiff from "../../global/PointDiff";
 import Point from "../../global/Point";
 import { massCanvasDef } from "../../global/massCanvasDef";
 
-
-// FROM パンフに反映されないマクロが存在する(test.msvi参照)
 export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: PamphMode){
     const personalPamphlets: Narve.Component[] = []
     scenes.forEach((scene,sceneIndex) => {
@@ -57,7 +55,12 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: Pamph
                     case "back": return new Pamph_BackWalk_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)),mode)
                     case "rotate": 
                         // MEMO シーンをまたいだ連続の方転は繋げれるけど、同シーン内で連続してたら正しく動作しない
-                        const normalRet = new Pamph_Rotate_Cnvs(action.move.rotateAngle.evaluate(person.variables,true),nextState.rotateAngle,count)
+                        const normalRet = new Pamph_Rotate_Cnvs(
+                            action.move.rotateAngle.evaluate(person.variables,true),
+                            nextState.rotateAngle,
+                            count,
+                            mode
+                        )
                         if(sceneIndex > 0 && accCount === 0){// 最初の方転は前シーンの方転に吸収されうる
                             const preLastAction = getLastAction(scenes[sceneIndex-1],person.id)
                             if(preLastAction){
@@ -72,16 +75,32 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: Pamph
                         if(sceneIndex < scenes.length-1 && accCount === sumCount){ // 最後の方転は次シーンの最初の方転を吸収する可能性あり
                             const nextScenesMe = scenes[sceneIndex+1].persons.find(p => p.id = person.id)
                             const nextFirstAction = getFirstAction(scenes[sceneIndex+1],person.id)
-                            if(nextScenesMe && nextFirstAction && nextFirstAction.move.type === "rotate"){
-                                const rotateAngle = action.move.rotateAngle.evaluate(person.variables,true) + 
-                                    nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
-                                return new Pamph_Rotate_Cnvs(rotateAngle,nextState.rotateAngle,count)
+                            if(nextScenesMe && nextFirstAction){
+                                if(nextFirstAction.move.type === "rotate"){
+                                    const rotateAngle = action.move.rotateAngle.evaluate(person.variables,true) + 
+                                        nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
+                                    return new Pamph_Rotate_Cnvs(
+                                        rotateAngle,
+                                        nextState.rotateAngle,
+                                        count,
+                                        mode
+                                    )
+                                }
+                                if(nextFirstAction.move.type === "absRotate"){
+                                    const rotateAngle = nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
+                                    return new Pamph_Rotate_Cnvs(
+                                        rotateAngle,
+                                        nextState.rotateAngle,
+                                        count,
+                                        mode
+                                    )
+                                }
                             }
                         }
                         // 普通のとき
                         return normalRet
                     case "absRotate":
-                        return new Pamph_AbsRotate_Cnvs(nextState.rotateAngle,count)
+                        return new Pamph_AbsRotate_Cnvs(nextState.rotateAngle - curState.rotateAngle, nextState.rotateAngle, count, mode)
                     case "revolve":
                         const toAngle = curState.pos.angle(massCanvasDef.centerPx) + (action.move.revolveAngle.evaluate(person.variables) >= 0 ? -90 : 90)
                         return new Pamph_Slide_Set_Cnvs(count,toAngle,"大回")
@@ -320,7 +339,7 @@ class Pamph_Idle_Cnvs  extends Narve.Component<HTMLCanvasElement> {
 }
 class Pamph_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
     // 円＋方向の線
-    constructor(relAngle: number,toAngle: number,count: number){
+    constructor(relAngle: number,toAngle: number,count: number,pamphMode: PamphMode){
         super("canvas",{class: "pamph_spin"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
@@ -353,17 +372,25 @@ class Pamph_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
 
         // 向きと方転角度
         ctx.font = "30px sans-serif"
+        // 絶対方向
+        // パンフごとで表示分ける
+        if(pamphMode === "MoonFemale" || pamphMode === "SunFemale")
+        if(toAngle % 45 === 0){// キリが良ければ
+            ctx.fillText(`t${(90 - toAngle + 360) % 360}°`,center[0],upperTextY)
+        }
+        // 相対方向
         let spinto = relAngle>=0? "左" : "右"
-        relAngle = Math.abs(relAngle)
-        if(relAngle === 180){
+        relAngle = Math.abs(relAngle) % 360
+        if(relAngle === 180 && (pamphMode === "SunFemale" || pamphMode === "MoonFlag")){
             spinto = ""
         }
+        if(relAngle === 0) spinto = ""
         ctx.fillText(`${spinto}${relAngle}°`,center[0],underTextY)
     }
 }
 class Pamph_AbsRotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
     // 円＋方向の線
-    constructor(toAngle: number,count: number){
+    constructor(relAngle: number,toAngle: number,count: number,pamphMode: PamphMode){
         super("canvas",{class: "pamph_spin"})
         const ctx = this.elem.getContext("2d")
         if(ctx === null) return
@@ -396,7 +423,20 @@ class Pamph_AbsRotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
 
         // 向きと方転角度
         ctx.font = "30px sans-serif"
-        ctx.fillText(`t${(90 - toAngle + 360) % 360}°`,center[0],underTextY)
+        // 絶対方向
+        ctx.fillText(`t${(90 - toAngle + 360) % 360}°`,center[0],upperTextY)
+        // 相対方向
+        // パンフごとで表示分ける
+        if(pamphMode === "MoonFemale" || pamphMode === "SunFemale")
+        if(relAngle % 45 === 0){
+            let spinto = relAngle>=0? "左" : "右"
+            relAngle = Math.abs(relAngle) % 360
+            if(relAngle === 180 && (pamphMode === "SunFemale")){
+                spinto = ""
+            }
+            if(relAngle === 0) spinto = ""
+            ctx.fillText(`${spinto}${relAngle}°`,center[0],underTextY)
+        }
     }
 }
 
@@ -444,7 +484,13 @@ class Pamph_Force_Rotate_Cnvs extends Narve.Component<HTMLCanvasElement> {
         ctx.font = "50px sans-serif"
         ctx.fillText("0",...center)
 
+        // 向きと方転角度
         ctx.font = "30px sans-serif"
+        // 絶対方向
+        if(toAngle % 45 === 0){// キリが良ければ
+            ctx.fillText(`t${(90 - toAngle + 360) % 360}°`,center[0],upperTextY)
+        }
+
         ctx.fillText("次方向",center[0],underTextY)
     }
 }

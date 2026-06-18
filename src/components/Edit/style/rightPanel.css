@@ -6,7 +6,6 @@
     &::-webkit-scrollbar{width: 0px;}
     
     & > .titleArea{
-        height: 10%;
         position: relative;
         & .rootBackBtn{
             background-color: rgba(0,0,0,0);

@@ -5,7 +5,6 @@ import Scene from "../../global/Scene";
 import TmpCanvas from "./tmpCanvas";
 import { action } from "../../global/Macro";
 import { MathExp } from "../../global/mathExp";
-import simLastState from "../../global/simLastState";
 import { createFramesFromAction } from "../../global/CreateFramesFromMacro";
 import PointDiff from "../../global/PointDiff";
 import Point from "../../global/Point";
@@ -156,30 +155,6 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: Pamph
                 }
             }).filter(v => v !== null)
 
-            
-            // 初期方向設定による強制的な方転について
-            // MEMO 強制的な方転は通常の方転と連続してもつながらないです！
-            if(sceneIndex < scenes.length-1){
-                const nextScenesMe = scenes[sceneIndex+1].persons.find(p => p.id = person.id)
-                if(nextScenesMe){
-                    const firstActType = getFirstAction(scenes[sceneIndex+1],nextScenesMe.id)?.move.type 
-                    if(
-                        firstActType && 
-                        firstActType !== "slide" && 
-                        firstActType !== "rotate" &&
-                        firstActType !== "absRotate" &&
-                        firstActType !== "dyclon" &&
-                        firstActType !== "revolve" &&
-                        firstActType !== "danceSlide"
-                    ){ // 次シーンの最初にスライド・方転が入ると初期方向設定による強制的な方転が無視される趣旨のif文
-                        const curLastRotateAngle = simLastState(person, scene).rotateAngle
-                        if(curLastRotateAngle !== nextScenesMe.startState.rotateAngle){ // 最後の向きと初期方向設定の向きが違ったら
-                            console.log(person.id,"次方向",curLastRotateAngle, nextScenesMe.startState.rotateAngle)// FROM グループで相談
-                            macroElems.push(new Pamph_Force_Rotate_Cnvs(nextScenesMe.startState.rotateAngle,mode))
-                        }
-                    }
-                }
-            }
             pamph.children.push(nr("div",{class: "pamphMacroArea"},...macroElems))
             pamph.children.push(nr("div",{class: "page-break"}))
             if(personalPamphlets[person.id-1] === undefined){

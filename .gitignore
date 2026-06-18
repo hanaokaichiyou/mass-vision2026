@@ -25,5 +25,7 @@ dist-ssr
 
 
 TODO.md
+mathExpEdit.md
 samples
 src-tauri/icons/app-icon.png
+*.old.*

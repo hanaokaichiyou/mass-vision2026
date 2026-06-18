@@ -1,8 +1,11 @@
 .bottomPanel {
     display: grid;
     grid-area: bottomPanel;
-    box-shadow: inset 0px 2px 4px #222;
-    background-color: #282828;
+    box-shadow: inset 0px 2px 4px #ddd;
+    @media (prefers-color-scheme: dark) {
+        box-shadow: inset 0px 2px 4px #222;
+    }
+    background-color: rgba(0,0,0,0);
     box-sizing: border-box;
     padding: 0px 2rem;
     overflow-x: scroll;

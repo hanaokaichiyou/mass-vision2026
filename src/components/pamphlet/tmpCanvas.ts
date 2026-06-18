@@ -1,9 +1,10 @@
 import { Narve } from "narve"
 import { massCanvasDef } from "../../global/massCanvasDef"
 import Point from "../../global/Point"
-import { frame, sceneFrames } from "../../global/Frames"
 import Person from "../../global/Person"
 import PointDiff from "../../global/PointDiff"
+import Scene from "../../global/Scene"
+import { createFramesFromAction } from "../../global/CreateFramesFromMacro"
 
 
 export default class TmpCanvas extends Narve.Component<HTMLCanvasElement> {
@@ -23,13 +24,13 @@ export default class TmpCanvas extends Narve.Component<HTMLCanvasElement> {
         this.elem.height = this.Height
         this.ctx = this.elem.getContext("2d")
     }
-    drawFrame(frame: frame,sceneFrames: sceneFrames,focusedPerson: Person,colorFills?: boolean[]){
+    drawFrame(scene: Scene,focusedPerson: Person,colorFills?: boolean[]){
         this.clearAll()
         this.drawGrid()
-        this.drawTrace(sceneFrames,focusedPerson)
-        frame.statePersonPairs.forEach(({state,person}) => {
-            this.plot(state.pos.add(this.adjustDiff),
-                state.rotateAngle,
+        this.drawTrace(scene,focusedPerson)
+        scene.persons.forEach(person => {
+            this.plot(person.startState.pos.add(this.adjustDiff),
+                person.startState.rotateAngle,
                 person === focusedPerson,
                 colorFills?.[person.colorIndex]
             )
@@ -156,21 +157,33 @@ export default class TmpCanvas extends Narve.Component<HTMLCanvasElement> {
             }
             this.ctx.stroke()
     }
-    drawTrace(sceneFrames: sceneFrames,focusedPerson: Person){
-        const personalStates = sceneFrames.map(frame => {
-            return frame.statePersonPairs.find(({person}) => person === focusedPerson)
-        })
-        if(!personalStates.every(v => v !== undefined)) return
-        personalStates.forEach(({state},i) => {
-            if(this.ctx === null) return
-            if(i){
-                this.ctx.beginPath()
-                this.ctx.lineWidth   = massCanvasDef.pamphTraceWidth
-                this.ctx.strokeStyle = massCanvasDef.pamphTraceColor
-                this.ctx.moveTo(...personalStates[i-1].state.pos.add(this.adjustDiff).getPair())
-                this.ctx.lineTo(...state.pos.add(this.adjustDiff).getPair())
-                this.ctx.stroke()
-            }
+    drawTrace(scene: Scene,focusedPerson: Person){
+        // const personalStates = sceneFrames.map(frame => {
+        //     return frame.statePersonPairs.find(({person}) => person === focusedPerson)
+        // })
+        if(focusedPerson.macroIndex === undefined) return
+        const macro = scene.macros[focusedPerson.macroIndex]
+        if(macro === undefined) return
+        const person = focusedPerson
+        let curState = person.startState.clone()
+        macro.actions.forEach(action => {
+            const [frames, newState] = createFramesFromAction(action,curState,1,scene.slides,person)
+            frames.push(newState)
+
+            frames.forEach((state,i) => {
+                if(this.ctx === null) return
+                if(i){
+                    this.ctx.beginPath()
+                    this.ctx.lineWidth   = massCanvasDef.pamphTraceWidth
+                    // const type = action.move.type
+                    this.ctx.strokeStyle = massCanvasDef.pamphTraceColor// TODO typeによって色を変える
+                    this.ctx.moveTo(...frames[i-1].pos.add(this.adjustDiff).getPair())
+                    this.ctx.lineTo(...state.pos.add(this.adjustDiff).getPair())
+                    this.ctx.stroke()
+                }
+            })
+            
+            curState = newState
         })
     }
     clearAll(){

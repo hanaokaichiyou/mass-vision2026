@@ -6,8 +6,8 @@ import { setNumKeyOperations } from "../../../global/ShortcutKey";
 // 人だけでなくリンクスライドの目的地編集にも使われる
 export default class DeployBtns extends Narve.Component {
     pointBtn = nr<HTMLButtonElement>("button",{},"・(1)")
-    rectBtn = nr<HTMLButtonElement>("button",{},"□(2)")
-    circleBtn = nr<HTMLButtonElement>("button",{},"○(3)")
+    rectBtn = nr<HTMLButtonElement>("button",{},"▢(2)")
+    circleBtn = nr<HTMLButtonElement>("button",{},"〇(3)")
     lineBtn = nr<HTMLButtonElement>("button",{},"／(4)")
     distanceBtn = nr<HTMLButtonElement>("button",{},"⇔(5)")
     removeBtn = nr("button",{},"🗑(6)")

@@ -403,7 +403,6 @@ export default class App extends Narve.Component {
             await this.manualPlayer.play(1,sceneFrames,startSceneNum)
         }
         this.playing = false
-        await message("アニメーション終了")
         this.edit.drawFirstFrame()
         this.edit.topPanel.sceneStateDisp.setSceneIndex(this.currentSceneIdx)
         this.edit.topPanel.sceneStateDisp.setCountNum(0)

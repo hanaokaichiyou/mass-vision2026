@@ -46,7 +46,6 @@ export default class Edit extends Narve.Component {
 
         this.rightPanel.cancelAll = () => this.cancelAll()
         this.rightPanel.macroEditWindow.drawMacro = () => this.drawMacro()
-        this.rightPanel.macroEditWindow.startInputMacro = d => this.bottomPanel.startInputMacro(d)
 
         // 配置ボタンたち
         this.rightPanel.deployBtns.pointBtn.elem.onclick     = async ()=>{while(await this.startPointDeploy());}
@@ -102,7 +101,7 @@ export default class Edit extends Narve.Component {
         this.rightPanel.slideEditWindow.rootMenu.linkBtn.elem.onclick = async ()=>{while(await this.startLink());}
 
         // 色
-        this.rightPanel.setColorIndexWindow.applyBtn.elem.onclick = async ()=>{
+        this.rightPanel.setColorIndexWindow.onDisplay = async ()=>{
             while(await this.startApplyColor());
         }
 
@@ -1423,7 +1422,7 @@ export default class Edit extends Narve.Component {
             return [person]
         }
         return this.scene.persons.filter(p => (p.state.pos.x - sx)*(p.state.pos.x - ex) <= 0 && (p.state.pos.y -sy)*(p.state.pos.y - ey) <= 0)
-            .sort((p1,p2) => 
+            .sort((p1,p2) => // 距離が近い順で返す(変数設定とかで有用)
                 p1.state.pos.sub(range[0]).toDiff().length() - p2.state.pos.sub(range[0]).toDiff().length()
             )
     }

@@ -3,7 +3,6 @@ import { Narve, nr } from "narve";
 import "./style/pamphlet.css"
 import Scene from "../../global/Scene";
 import TmpCanvas from "./tmpCanvas";
-import { createFirstFrame, createFrames } from "../../global/CreateFrames";
 import { action } from "../../global/Macro";
 import { MathExp } from "../../global/mathExp";
 import simLastState from "../../global/simLastState";
@@ -15,15 +14,9 @@ import { massCanvasDef } from "../../global/massCanvasDef";
 export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: PamphMode){
     const personalPamphlets: Narve.Component[] = []
     scenes.forEach((scene,sceneIndex) => {
-        const frame = createFirstFrame(scene)
-        const _sceneFrames = createFrames(scenes,1,sceneIndex,sceneIndex)
-        if(_sceneFrames === null) {console.error("sceneFrames - null");return}
-        const sceneFrames = _sceneFrames[0]
-        if(sceneFrames === undefined) return
-
         scene.persons.forEach((person) => {
             const tmpCanvas = new TmpCanvas()
-            tmpCanvas.drawFrame(frame,sceneFrames,person,colorFills)
+            tmpCanvas.drawFrame(scene,person,colorFills)
             const pamph = nr("div",{},
                 nr("h1",{},`No.${person.id} シーン${sceneIndex+1}`),
                 tmpCanvas
@@ -55,52 +48,95 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: Pamph
                     case "back": return new Pamph_BackWalk_Cnvs(count,Math.round(count / action.move.dcell.evaluate(person.variables)),mode)
                     case "rotate": 
                         // MEMO シーンをまたいだ連続の方転は繋げれるけど、同シーン内で連続してたら正しく動作しない
-                        const normalRet = new Pamph_Rotate_Cnvs(
+                        const normalRelRet = new Pamph_Rotate_Cnvs(
                             action.move.rotateAngle.evaluate(person.variables,true),
                             nextState.rotateAngle,
                             count,
                             mode
                         )
-                        if(sceneIndex > 0 && accCount === 0){// 最初の方転は前シーンの方転に吸収されうる
+                        if(sceneIndex > 0 && accCount === 0 && action.count.evaluate(person.variables)){// 最初の0ct方転は前シーンの最後の0ct方転に吸収されうる
                             const preLastAction = getLastAction(scenes[sceneIndex-1],person.id)
-                            if(preLastAction){
+                            if(preLastAction && preLastAction.count.evaluate(person.variables) === 0){
                                 if(preLastAction.move.type === "rotate") return null
                                 if(preLastAction.move.type === "absRotate") return null
-                                if(preLastAction.move.type === "slide") return null
-                                if(preLastAction.move.type === "danceSlide") return null
-                                if(preLastAction.move.type === "revolve") return null
-                                if(preLastAction.move.type === "dyclon") return null
                             }
                         }
-                        if(sceneIndex < scenes.length-1 && accCount === sumCount){ // 最後の方転は次シーンの最初の方転を吸収する可能性あり
+                        if(sceneIndex < scenes.length-1 && accCount === sumCount && action.count.evaluate(person.variables)){ // 最後の0ct方転は次シーンの最初の0ct方転を吸収しうる
                             const nextScenesMe = scenes[sceneIndex+1].persons.find(p => p.id = person.id)
                             const nextFirstAction = getFirstAction(scenes[sceneIndex+1],person.id)
-                            if(nextScenesMe && nextFirstAction){
-                                if(nextFirstAction.move.type === "rotate"){
-                                    const rotateAngle = action.move.rotateAngle.evaluate(person.variables,true) + 
-                                        nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
-                                    return new Pamph_Rotate_Cnvs(
-                                        rotateAngle,
-                                        nextState.rotateAngle,
-                                        count,
-                                        mode
-                                    )
-                                }
-                                if(nextFirstAction.move.type === "absRotate"){
-                                    const rotateAngle = nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
-                                    return new Pamph_Rotate_Cnvs(
-                                        rotateAngle,
-                                        nextState.rotateAngle,
-                                        count,
-                                        mode
-                                    )
+                            if(nextScenesMe && nextFirstAction && nextFirstAction.count.evaluate(person.variables)){
+                                switch(nextFirstAction.move.type){
+                                    case "rotate":
+                                        const relRotateAngle = action.move.rotateAngle.evaluate(person.variables,true) + 
+                                            nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
+                                        return new Pamph_Rotate_Cnvs(
+                                            relRotateAngle,
+                                            curState.rotateAngle + relRotateAngle,
+                                            count,
+                                            mode
+                                        )
+                                    case "absRotate":
+                                        const absRotateAngle = nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
+                                        return new Pamph_AbsRotate_Cnvs(
+                                            absRotateAngle - curState.rotateAngle,
+                                            absRotateAngle,
+                                            count,
+                                            mode
+                                        )
+                                    case "slide":
+                                    case "danceSlide":
+                                    case "revolve":
+                                    case "dyclon":
+                                        // このときは次のシーンの最初に必ず「次方向」の方転が入るのでここでの方転は不要
+                                        return null
                                 }
                             }
                         }
                         // 普通のとき
-                        return normalRet
+                        return normalRelRet
                     case "absRotate":
-                        return new Pamph_AbsRotate_Cnvs(nextState.rotateAngle - curState.rotateAngle, nextState.rotateAngle, count, mode)
+                        // MEMO シーンをまたいだ連続の方転は繋げれるけど、同シーン内で連続してたら正しく動作しない
+                        const normalAbsRet = new Pamph_AbsRotate_Cnvs(nextState.rotateAngle - curState.rotateAngle, nextState.rotateAngle, count, mode)
+                        if(sceneIndex > 0 && accCount === 0 && action.count.evaluate(person.variables)){// 最初の0ct方転は前シーンの最後の0ct方転に吸収されうる
+                            const preLastAction = getLastAction(scenes[sceneIndex-1],person.id)
+                            if(preLastAction && preLastAction.count.evaluate(person.variables) === 0){
+                                if(preLastAction.move.type === "rotate") return null
+                                if(preLastAction.move.type === "absRotate") return null
+                            }
+                        }
+                        if(sceneIndex < scenes.length-1 && accCount === sumCount && action.count.evaluate(person.variables)){ // 最後の0ct方転は次シーンの最初の0ct方転を吸収しうる
+                            const nextScenesMe = scenes[sceneIndex+1].persons.find(p => p.id = person.id)
+                            const nextFirstAction = getFirstAction(scenes[sceneIndex+1],person.id)
+                            if(nextScenesMe && nextFirstAction && nextFirstAction.count.evaluate(person.variables)){
+                                switch(nextFirstAction.move.type){
+                                    case "rotate":
+                                        const absRotateAngle1 = action.move.rotateAngle.evaluate(person.variables,true) + 
+                                            nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
+                                        return new Pamph_AbsRotate_Cnvs(
+                                            absRotateAngle1 - curState.rotateAngle,
+                                            absRotateAngle1,
+                                            count,
+                                            mode
+                                        )
+                                    case "absRotate":
+                                        const absRotateAngle2 = nextFirstAction.move.rotateAngle.evaluate(nextScenesMe.variables,true)
+                                        return new Pamph_AbsRotate_Cnvs(
+                                            absRotateAngle2 - curState.rotateAngle,
+                                            absRotateAngle2,
+                                            count,
+                                            mode
+                                        )
+                                    case "slide":
+                                    case "danceSlide":
+                                    case "revolve":
+                                    case "dyclon":
+                                        // このときは次のシーンの最初に必ず「次方向」の方転が入るのでここでの方転は不要
+                                        return null
+                                }
+                            }
+                        }
+                        // 普通のとき
+                        return normalAbsRet
                     case "revolve":
                         const toAngle = curState.pos.angle(massCanvasDef.centerPx) + (action.move.revolveAngle.evaluate(person.variables) >= 0 ? -90 : 90)
                         return new Pamph_Slide_Set_Cnvs(count,toAngle,mode,"大回")
@@ -131,12 +167,14 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: Pamph
                         firstActType && 
                         firstActType !== "slide" && 
                         firstActType !== "rotate" &&
+                        firstActType !== "absRotate" &&
                         firstActType !== "dyclon" &&
                         firstActType !== "revolve" &&
                         firstActType !== "danceSlide"
-                    ){ // 次シーンの最初にスライド・方転が入ると初期方向設定による強制的な方転が無視される
+                    ){ // 次シーンの最初にスライド・方転が入ると初期方向設定による強制的な方転が無視される趣旨のif文
                         const curLastRotateAngle = simLastState(person, scene).rotateAngle
-                        if(curLastRotateAngle !== nextScenesMe.startState.rotateAngle){
+                        if(curLastRotateAngle !== nextScenesMe.startState.rotateAngle){ // 最後の向きと初期方向設定の向きが違ったら
+                            console.log(person.id,"次方向",curLastRotateAngle, nextScenesMe.startState.rotateAngle)// FROM グループで相談
                             macroElems.push(new Pamph_Force_Rotate_Cnvs(nextScenesMe.startState.rotateAngle,mode))
                         }
                     }

@@ -1,0 +1,33 @@
+.macroSupports {
+    & > .macroSupport {
+        font-family: monospace;
+        & > input {
+            display: inline-block;
+            padding: 0px 0.3em;
+            max-width: 100%;
+            border-radius: 0px;
+            box-shadow: none;
+            text-align: center;
+            &:focus{
+                border: 2px solid rgb(25, 138, 238);
+            }
+        }
+        & > select {
+            display: inline-block;
+            padding: 0px;
+            max-width: 100%;
+            border-radius: 0px;
+            box-shadow: none;
+            text-align: center;
+            &:focus{
+                border: 2px solid rgb(25, 138, 238);
+            }
+        }
+        & > button {
+            padding: 0px;
+            border-radius: 0px;
+            background-color: rgba(0,0,0,0);
+            box-shadow: none;
+        }
+    }
+}

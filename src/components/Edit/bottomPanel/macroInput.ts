@@ -2,10 +2,13 @@ import { Narve, nr } from "narve";
 import "./style/macroInput.css"
 
 export default class MacroInput extends Narve.Component {
-macroInput = nr<HTMLInputElement>("input",{type: "text", placeholder: "マクロを入力(Enterで完了)"})
+    macroInput = nr<HTMLInputElement>("input",{type: "text", placeholder: "マクロを入力(Enterで完了)"})
     constructor(){
         super("div",{class: "macroInput"})
         this.children.set(this.macroInput)
+    }
+    insertText(text: string){
+        this.macroInput.elem.value = this.macroInput.elem.value + text
     }
     startInputMacro(defaultVal: string): Promise<string>{
         this.macroInput.elem.value = defaultVal

@@ -6,6 +6,7 @@ import { UndoFunc } from "../../../global/Undo";
 import { massCanvasDef } from "../../../global/massCanvasDef";
 import { setNumKeyOperations } from "../../../global/ShortcutKey";
 import RightPanel from "../rightPanel";
+import MacroSupport from "./macroEditWindow/macroSupport";
 
 export default class MacroEditWindow extends Narve.Component {
     macroIndexSelect = nr<HTMLSelectElement>("select")
@@ -18,6 +19,7 @@ export default class MacroEditWindow extends Narve.Component {
     reverseMacroArea = nr("div",{class: "reverseMacroArea"},this.reverseMacroCheckBox,this.reverseMacroLabel)
     macroDisp = nr("p")
     addMacroBtn = nr("button",{},"3．+　マクロを追加")
+    macroSupport = new MacroSupport()
     scene: Scene|undefined
 
     parent: RightPanel
@@ -31,16 +33,22 @@ export default class MacroEditWindow extends Narve.Component {
             this.editBtn,
             // this.applyReverseMacroBtn,
             this.reverseMacroArea,
-            this.addMacroBtn
+            this.addMacroBtn,
+            this.macroSupport
         )
         // this.applyReverseMacroBtn.hide()
         this.macroDisp.hide()
         this.editBtn.hide()
+        this.macroSupport.hide()
 
         this.addMacroBtn.elem.onclick = () => this.addNewMacro()
         this.editBtn.elem.onclick = () => this.startEditMacro(this.macroIndexSelect.elem.selectedIndex)
         this.macroIndexSelect.elem.onchange = () => this.setMacroIndex(this.macroIndexSelect.elem.selectedIndex)
         this.reverseMacroCheckBox.elem.onchange = () =>  this.restartApplyMacro()
+
+        this.macroSupport.onEnter = insertText => {
+            parent.parent.bottomPanel.macroInput.insertText(insertText)
+        }
     }
     setScene(scene: Scene){
         this.scene = scene
@@ -68,6 +76,7 @@ export default class MacroEditWindow extends Narve.Component {
         this.macroDisp.setInnerText(macroStr||"未定義のマクロ")
         this.macroDisp.display()
         this.editBtn.display()
+        this.macroSupport.hide()
         // this.applyReverseMacroBtn.display()
 
         this.macroColorDiv.elem.style.backgroundColor = ""
@@ -87,6 +96,7 @@ export default class MacroEditWindow extends Narve.Component {
 
         this.macroDisp.hide()
         this.editBtn.hide()
+        this.macroSupport.display()
         // this.applyReverseMacroBtn.hide()
 
         const curStr = this.scene.macros[index].macroStr
@@ -111,9 +121,7 @@ export default class MacroEditWindow extends Narve.Component {
         })
     }
     async startInputMacro(defaultVal: string): Promise<string>{
-        // defined in project://src/components/Edit.ts
-        defaultVal
-        return ""
+        return this.parent.parent.bottomPanel.startInputMacro(defaultVal)
     }
     addNewMacro(){
         if(this.scene === undefined) return

@@ -1,6 +1,5 @@
 import { Narve, nr } from "narve";
 import DeployBtns from "./rightPanel/deployBtns";
-import "./style/rightPanel.css"
 import RootMenu from "./rightPanel/rootMenu";
 import MacroEditWindow from "./rightPanel/macroEditWindow";
 import SlideEditWindow from "./rightPanel/slideEditWindow";
@@ -12,6 +11,8 @@ import VarsSettings from "./rightPanel/varsSettings";
 import { setNumKeyOperations } from "../../global/ShortcutKey";
 import StatusCheckWindow from "./rightPanel/statusCheckWindow";
 import Edit from "../Edit";
+import RightHelpArea from "./rightPanel/rightHelpArea";
+import "./style/rightPanel.css"
 
 export default class RightPanel extends Narve.Component {
     rootMenu = new RootMenu()
@@ -38,14 +39,26 @@ export default class RightPanel extends Narve.Component {
     )
 
     rootBackBtn = nr("button",{class: "rootBackBtn"},"⌂")
+    titleElem = nr("p")
+    helpBtn = nr("button",{class: "helpBtn"},"?")
+    titleArea = nr("div",{class: "titleArea"},this.rootBackBtn,this.titleElem,this.helpBtn)
 
+    helpArea = new RightHelpArea()
     parent: Edit
     constructor(parent: Edit){
         super("div",{class: "rightPanel"})
         this.parent = parent
-        this.children.set(this.rootBackBtn,this.windows)
+        this.children.set(this.titleArea,this.helpArea,this.windows)
         this.parent.leftPanel.clear()
+        
         this.windows.switchFocus(this.rootMenu)
+        this.setTitle("ホーム")
+        this.helpArea.helps.switchFocus(this.helpArea.homeHelp)
+
+        this.helpBtn.elem.onclick = () => {
+            this.helpArea.elem.classList.toggle("display")
+        }
+
 
         this.rootBackBtn.elem.onclick =
         this.deployBtns.elem.oncontextmenu = 
@@ -60,45 +73,74 @@ export default class RightPanel extends Narve.Component {
             e.preventDefault()
             this.cancelAll()
             this.parent.leftPanel.clear()
+            
             this.windows.switchFocus(this.rootMenu)
+            this.setTitle("ホーム")
+            this.helpArea.helps.switchFocus(this.helpArea.homeHelp)
+            
             parent.drawFirstFrame()
         }
 
         this.rootMenu.deployBtn.elem.onclick = () => {
             this.parent.leftPanel.clear()
+            
             this.windows.switchFocus(this.deployBtns)
+            this.setTitle("配置")
+            this.helpArea.helps.switchFocus(this.helpArea.deployHelp)
         }
         // 初期方向設定はleftPanelに指示を出すだけで画面遷移がないのでEdit.tsで記述されている
+
         // 特殊初期方向設定も同様
         this.rootMenu.statusCheckBtn.elem.onclick = () => {
             this.parent.leftPanel.clear()
+            
             this.windows.switchFocus(this.statusCheckWindow)
+            this.setTitle("ステータス確認")
+            this.helpArea.helps.switchFocus(this.helpArea.statusCheckHelp)
         }
         this.rootMenu.macroEditBtn.elem.onclick = () => {
             this.parent.leftPanel.clear()
+
             this.windows.switchFocus(this.macroEditWindow)
+            this.setTitle("マクロ編集")
+            this.helpArea.helps.switchFocus(this.helpArea.macroEditHelp)
+
             this.macroEditWindow.setMacroIndex(0)
         }
         this.rootMenu.slideEditBtn.elem.onclick = () => {
             this.parent.leftPanel.clear()
+
             this.windows.switchFocus(this.slideEditWindow)
+            this.setTitle("スライド編集")
+            this.helpArea.helps.switchFocus(this.helpArea.slideEditHelp)
+
             this.slideEditWindow.setSlideIndex(0)
         }
         this.rootMenu.colorIndexBtn.elem.onclick = () => {
             this.parent.leftPanel.clear()
+
             this.windows.switchFocus(this.setColorIndexWindow)
+            this.setTitle("色分け")
+            this.helpArea.helps.switchFocus(this.helpArea.colorIndexHelp)
         }
         this.rootMenu.idBtn.elem.onclick = () => {
             this.parent.leftPanel.clear()
+
             this.windows.switchFocus(this.idWindow)
-        }
-        this.rootMenu.pamphSettingBtn.elem.onclick = () => {
-            this.parent.leftPanel.clear()
-            this.windows.switchFocus(this.pamphSettings)
+            this.setTitle("番号")
+            this.helpArea.helps.switchFocus(this.helpArea.idHelp)
         }
         this.rootMenu.varsSettingsBtn.elem.onclick = () => {
             this.parent.leftPanel.clear()
             this.windows.switchFocus(this.varsSettings)
+            this.setTitle("変数設定")
+        }
+        this.rootMenu.pamphSettingBtn.elem.onclick = () => {
+            this.parent.leftPanel.clear()
+
+            this.windows.switchFocus(this.pamphSettings)
+            this.setTitle("パンフ設定")
+            this.helpArea.helps.switchFocus(this.helpArea.pamphSettingHelp)
         }
 
         setNumKeyOperations([() => {this.rootBackBtn.elem.focus()}])
@@ -108,6 +150,9 @@ export default class RightPanel extends Narve.Component {
         this.slideEditWindow.setScene(scene)
         this.parent.leftPanel.clear()
         this.windows.switchFocus(this.rootMenu)
+    }
+    setTitle(title: string){
+        this.titleElem.setInnerText(title)
     }
     async cancelAll(){
         // define in project://src/components/Edit.ts

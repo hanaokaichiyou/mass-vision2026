@@ -17,6 +17,9 @@
         }
     }
     &.hovering{
-        border: light-dark(#888,#fff) 3px solid;
+        border: #888 3px solid;
+        @media (prefers-color-scheme: dark){
+            border: #fff 3px solid;
+        }
     }
 }

@@ -5,6 +5,7 @@ import Person from "../../global/Person"
 import PointDiff from "../../global/PointDiff"
 import Scene from "../../global/Scene"
 import { createFramesFromAction } from "../../global/CreateFramesFromMacro"
+import { PamphMode } from "./createPamphlet"
 
 
 export default class TmpCanvas extends Narve.Component<HTMLCanvasElement> {
@@ -24,10 +25,10 @@ export default class TmpCanvas extends Narve.Component<HTMLCanvasElement> {
         this.elem.height = this.Height
         this.ctx = this.elem.getContext("2d")
     }
-    drawFrame(scene: Scene,focusedPerson: Person,colorFills?: boolean[]){
+    drawFrame(scene: Scene,focusedPerson: Person,pamphMode: PamphMode,colorFills?: boolean[]){
         this.clearAll()
         this.drawGrid()
-        this.drawTrace(scene,focusedPerson)
+        this.drawTrace(scene,focusedPerson,pamphMode)
         scene.persons.forEach(person => {
             this.plot(person.startState.pos.add(this.adjustDiff),
                 person.startState.rotateAngle,
@@ -157,7 +158,7 @@ export default class TmpCanvas extends Narve.Component<HTMLCanvasElement> {
             }
             this.ctx.stroke()
     }
-    drawTrace(scene: Scene,focusedPerson: Person){
+    drawTrace(scene: Scene,focusedPerson: Person,pamphMode: PamphMode){
         // const personalStates = sceneFrames.map(frame => {
         //     return frame.statePersonPairs.find(({person}) => person === focusedPerson)
         // })
@@ -175,8 +176,38 @@ export default class TmpCanvas extends Narve.Component<HTMLCanvasElement> {
                 if(i){
                     this.ctx.beginPath()
                     this.ctx.lineWidth   = massCanvasDef.pamphTraceWidth
-                    // const type = action.move.type
-                    this.ctx.strokeStyle = massCanvasDef.pamphTraceColor// TODO typeによって色を変える
+                    const type = action.move.type
+                    let traceColorIndex = 0
+                    switch(pamphMode){
+                        case "MoonFemale":
+                        case "SunFemale":
+                        case "SunShield":
+                            if(type === "liner"){
+                                const dcell = action.move.dcell.evaluate(person.variables)
+                                const count = action.count.evaluate(person.variables)
+
+                                if(Math.abs(count/dcell - 2) < 0.01) traceColorIndex = 1
+                                if(Math.abs(count/dcell - 4) < 0.01) traceColorIndex = 2
+                            }
+                            break
+                        case "MoonFlag":
+                            if(type === "liner"){
+                                const dcell = action.move.dcell.evaluate(person.variables)
+                                const count = action.count.evaluate(person.variables)
+
+                                if(Math.abs(count/dcell - 3) < 0.01) traceColorIndex = 1
+                                if(Math.abs(count/dcell - 6) < 0.01) traceColorIndex = 2
+                            }
+                            break
+                    }
+                    switch(type){
+                        case "danceSlide":
+                        case "dyclon":
+                        case "revolve":
+                        case "slide":
+                             traceColorIndex = 3
+                    }
+                    this.ctx.strokeStyle = massCanvasDef.pamphTraceColors[traceColorIndex]
                     this.ctx.moveTo(...frames[i-1].pos.add(this.adjustDiff).getPair())
                     this.ctx.lineTo(...state.pos.add(this.adjustDiff).getPair())
                     this.ctx.stroke()

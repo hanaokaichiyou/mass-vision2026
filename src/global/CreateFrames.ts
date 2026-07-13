@@ -64,6 +64,7 @@ function createSceneFrames(scene: Scene, fpc: number,closeSegment: boolean): sce
                 statePersonPairs: []
             }
             scene.macros[person.macroIndex].actions.forEach(action => {
+                if(action.isHiddenInAnimation) return
                 const [frames,newState] = createFramesFromAction(action,curState,fpc,slides,person)
                 if(debug === 0) console.log("frames",frames)
                 personalFrames.statePersonPairs.push(...frames.map((state,f) => {

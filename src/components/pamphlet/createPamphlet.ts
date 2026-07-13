@@ -15,7 +15,7 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: Pamph
     scenes.forEach((scene,sceneIndex) => {
         scene.persons.forEach((person) => {
             const tmpCanvas = new TmpCanvas()
-            tmpCanvas.drawFrame(scene,person,colorFills)
+            tmpCanvas.drawFrame(scene,person,mode,colorFills)
             const pamph = nr("div",{},
                 nr("h1",{},`No.${person.id} シーン${sceneIndex+1}`),
                 tmpCanvas
@@ -40,6 +40,10 @@ export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: Pamph
                 accCount += count
                 const [_,newState] = createFramesFromAction(action,curState,0,scene.slides,person)
                 nextState = newState
+
+                // パンフに非表示ならnullを返す
+                if(action.isHiddenInPamph) return null
+
                 switch(action.move.type){
                     case "break": return new Pamph_Break_Cnvs(count,action.move.text)
                     case "idle" : return new Pamph_Idle_Cnvs(count,action.move.text)
@@ -182,7 +186,9 @@ function getFirstAction(scene: Scene,id: number){
             type: "break",
             text: ""
         },
-        count: new MathExp.ExpressionTree("0")
+        count: new MathExp.ExpressionTree("0"),
+        isHiddenInPamph: false,
+        isHiddenInAnimation: false
     }
     macro.actions.some(action => {
         if(action.move.type === "rotate"){
@@ -208,7 +214,9 @@ function getLastAction(scene: Scene,id: number){
             type: "break",
             text: ""
         },
-        count: new MathExp.ExpressionTree("0")
+        count: new MathExp.ExpressionTree("0"),
+        isHiddenInPamph: false,
+        isHiddenInAnimation: false
     }
     ;[...macro.actions].reverse().some(action => {
         if(action.move.type === "rotate"){

@@ -42,7 +42,7 @@ export default class SlowBar extends Narve.Component<HTMLCanvasElement> {
 
         this.renderBar()
         this.renderSeg()
-        /*　FROM 
+        /*　
         [x] src\global\CreateSaveData.tsでscenesのslowSegmentsを保存できるようにする 
         [x] 読み込めるようにする
         [x] 再生のタイミングでslowSegmentsを反映できるようにする
@@ -215,5 +215,4 @@ export default class SlowBar extends Narve.Component<HTMLCanvasElement> {
         this.drawASeg(newSeg,selected)
         console.log("updated: ",id,curSeg, newSeg)
     }
-    // FROM スローの更新処理から書く
 }

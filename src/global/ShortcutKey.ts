@@ -44,9 +44,10 @@ export default async function registerShortcutKey(app: App){
     await register("Esc", (e) => ur(e,()=>{app.player.pause();app.manualPlayer.pause()}))
     await register("Ctrl+Space", (e) => ur(e,()=>{app.edit.leftPanel.toggleRangeSelect()}))
     await register("Ctrl+L", (e) => ur(e,()=>{app.edit.editField.zoomCanvas.toggleZoomable()}))
+    await register("Ctrl+Shift+C", (e) => ur(e,()=>{menuFunctions.copyScene(app)}))
+    await register("Ctrl+Shift+V", (e) => ur(e,()=>{menuFunctions.pasteScene(app)}))
 
     numberKeyOperations.forEach(async (_,i) => {
         await register(`Alt+${i}`,e => up(e,() => numberKeyOperations[i]()))
     })
-    // await register("", () => )
 } 

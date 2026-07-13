@@ -51,7 +51,7 @@ export namespace massCanvasDef {
     export const pamphFocusColor = "rgba(255,0,0,1)"
     export const pamphGridColor = "#888"
     export const pamphTraceWidth = 4
-    export const pamphTraceColor = "#000"
+    export const pamphTraceColors = ["#000","#f00","rgb(0, 110, 255)","rgb(0, 210, 18)"]
     export const uiGoastColor = "rgba(255,255,255,0.5)"
     export const unselectablePersonMarkerColor = "#888"
     export const personMarkerR = 5

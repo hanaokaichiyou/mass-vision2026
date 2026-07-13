@@ -351,7 +351,7 @@ export default class Edit extends Narve.Component {
         this.leftPanel.setModeDispStr("削除")
         const persons = await this.startSelectRangePersons("削除したい範囲を指定してください")
         this.editField.uiCanvas.clearAll()
-        if(persons === undefined) return false
+        if(persons === null) return false
         this.leftPanel.clear()
         this.removePersons(...persons)
         this.drawFirstFrame()
@@ -409,7 +409,7 @@ export default class Edit extends Narve.Component {
         if(base === null) return false
         const persons = await this.startSelectRangePersons("適用範囲を選択してください")
         this.editField.uiCanvas.clearAll()
-        if(persons === undefined) return false
+        if(persons === null) return false
         this.leftPanel.clear()
         const befPos: [Person,Point][] = this.scene.persons.map(person => [person,person.startState.pos.clone()])
         persons.forEach(person => {
@@ -432,11 +432,12 @@ export default class Edit extends Narve.Component {
     }
     // theta: 度
     async startSymmetry(theta: number,mode: string){
+        // TODO 対称コピーでマクロもコピーして、方転の向きを対称に
         this.editField.uiCanvas.cancel()
         this.leftPanel.clear()
         this.leftPanel.setModeDispStr(mode)
         const persons = await this.startSelectRangePersons("対称にコピーする人を選択してください")
-        if(persons === undefined) return
+        if(persons === null) return
         const newPoses = persons.map(person => person.startState.pos.toSymmetry(theta,ms.centerPx))
         this.pushUndoAddNewPersons(...this.addNewPersons(...newPoses))
         this.editField.uiCanvas.clearAll()
@@ -448,7 +449,7 @@ export default class Edit extends Narve.Component {
         this.leftPanel.clear()
         this.leftPanel.setModeDispStr("原点対称")
         const persons = await this.startSelectRangePersons("対称にコピーする人を選択してください")
-        if(persons === undefined) return
+        if(persons === null) return
         const newPoses = persons.map(person => person.startState.pos.toSymmetry(90,ms.centerPx).toSymmetry(0,ms.centerPx))
         this.pushUndoAddNewPersons(...this.addNewPersons(...newPoses))
         this.editField.uiCanvas.clearAll()
@@ -461,7 +462,7 @@ export default class Edit extends Narve.Component {
         this.leftPanel.clear()
         this.leftPanel.setModeDispStr(mode)
         const persons = await this.startSelectRangePersons("対称にコピーする人を選択してください")
-        if(persons === undefined) return
+        if(persons === null) return
         const newPoses = persons.map(person => person.startState.pos.toRevolved(theta,ms.centerPx))
         this.pushUndoAddNewPersons(...this.addNewPersons(...newPoses))
         this.editField.uiCanvas.clearAll()
@@ -475,7 +476,7 @@ export default class Edit extends Narve.Component {
         this.leftPanel.setModeDispStr(cutAndPaste?"切り取り":"コピー")
         const persons = await this.startSelectRangePersons("人を選択してください")
         this.editField.uiCanvas.clearAll()
-        if(persons === undefined) return false
+        if(persons === null) return false
         persons.forEach(person => this.editField.uiCanvas.drawSelect(person.state.pos))
         const basePerson = persons.reduce((base,person) => {
             if(base.startState.pos.x < person.startState.pos.x) return base
@@ -522,7 +523,7 @@ export default class Edit extends Narve.Component {
         this.leftPanel.clear()
 
         const persons = await this.startSelectRangePersons("初期方向を適用する範囲を指定してください",true)
-        if(persons === undefined) return false
+        if(persons === null) return false
         const person_anglePair: [Person,number][] = persons.map(person => [person,person.startState.rotateAngle])
         const angle = this.leftPanel.rotateAngleSelect.value
         persons.forEach(person => {
@@ -557,7 +558,7 @@ export default class Edit extends Narve.Component {
         if(point === null) return false
 
         const persons = await this.startSelectRangePersons("特殊初期方向を適用する範囲を指定してください")
-        if(persons === undefined) return false
+        if(persons === null) return false
         // undo用に変更前の方向を保存しておく
         const person_anglePair: [Person,number][] = persons.map(person => [person,person.startState.rotateAngle])
         persons.forEach(person => {
@@ -599,7 +600,7 @@ export default class Edit extends Narve.Component {
             onRangeChange,onRangeChange
         )
         this.editField.uiCanvas.clearAll()
-        if(persons === undefined) return false
+        if(persons === null) return false
         this.leftPanel.clear()
         
         const newMacroIndex = this.rightPanel.macroEditWindow.getFocusingMacroIndex()
@@ -643,14 +644,16 @@ export default class Edit extends Narve.Component {
         const inc = this.rightPanel.varsSettings.getInc()
         if(varName === null || value === null || inc === null) return false
         this.editField.uiCanvas.clearAll()
-        if(persons === undefined) return false
+        if(persons === null) return false
         console.log("persons",persons,value,inc)
         this.leftPanel.clear()
         if(Array.isArray(persons)){
+            // 複数人を選択した場合は、値と増分に応じて適用する
             const person_varsPair: [Person,ms.Variables][] = persons.map(person => [person,person.variables])
             persons.forEach((person,i) => {
                 person.variables[varName] = Math.max(value + inc*i,0)
             })
+
             this.pushUndo({
                 do: () => {
                     persons.forEach((person,i) => {
@@ -668,6 +671,10 @@ export default class Edit extends Narve.Component {
                 }
             })
         }else{
+            // 人単体を選択した場合は変数を1増やす
+
+            if(persons === undefined) return true// クリックした場所に人がいなかった時もundefinedになるため
+
             const person = persons
             person.variables[varName]++
             this.pushUndo({
@@ -1184,7 +1191,7 @@ export default class Edit extends Narve.Component {
         this.leftPanel.clear()
         const persons = await this.startSelectRangePersons("色分けを適用する範囲を指定してください")
         this.editField.uiCanvas.clearAll()
-        if(persons === undefined) return false
+        if(persons === null) return false
         this.leftPanel.clear()
         const person_colorPair: [Person,number][] = persons.map(person => [person,person.colorIndex])
         const colorIndex = this.rightPanel.setColorIndexWindow.getColorIndex()
@@ -1223,7 +1230,7 @@ export default class Edit extends Narve.Component {
         this.editField.uiCanvas.drawSelect(person.state.pos)
         return true
     }
-    startSelectRangePersons(order: string,isWithRotateAngleSelect = false,onRectRangeChange?: (p:[Point,Point]) => any,onParaRangeChange?: (p:[Point,Point,Point]) => any): Promise<Person[]|undefined>{
+    startSelectRangePersons(order: string,isWithRotateAngleSelect = false,onRectRangeChange?: (p:[Point,Point]) => any,onParaRangeChange?: (p:[Point,Point,Point]) => any): Promise<Person[]|null>{
         this.leftPanel.clear()
         this.leftPanel.order(order)
         const clearEvents = () => {
@@ -1260,10 +1267,10 @@ export default class Edit extends Narve.Component {
                 console.log("rotateAngleSelect")
                 this.leftPanel.dispRotateAngleSelect()
             }
-            this.leftPanel.cancel = () => resolve(undefined)
+            this.leftPanel.cancel = () => resolve(null)
         })
     }
-    startSelectRangeOrPickupPerson(order: string,isWithRotateAngleSelect = false,onRectRangeChange?: (p:[Point,Point]) => any,onParaRangeChange?: (p:[Point,Point,Point]) => any): Promise<Person[]|Person|undefined>{
+    startSelectRangeOrPickupPerson(order: string,isWithRotateAngleSelect = false,onRectRangeChange?: (p:[Point,Point]) => any,onParaRangeChange?: (p:[Point,Point,Point]) => any): Promise<Person[]|Person|undefined|null>{
         this.leftPanel.clear()
         this.leftPanel.order(order)
         const clearEvents = () => {
@@ -1280,6 +1287,7 @@ export default class Edit extends Narve.Component {
                     return
                 }
                 if(range[0].distance(range[1]) < ms.personMarkerR){
+                    // クリック時
                     const [person] = this.nearestPerson(range[0],ms.personMarkerR)
                     clearEvents()
                     resolve(person)
@@ -1298,6 +1306,7 @@ export default class Edit extends Narve.Component {
                     return
                 }
                 if(range[0].distance(range[1]) < ms.personMarkerR && range[0].distance(range[2]) < ms.personMarkerR){
+                    // クリック時
                     const [person] = this.nearestPerson(range[0],ms.personMarkerR)
                     clearEvents()
                     resolve(person)
@@ -1312,7 +1321,7 @@ export default class Edit extends Narve.Component {
                 console.log("rotateAngleSelect")
                 this.leftPanel.dispRotateAngleSelect()
             }
-            this.leftPanel.cancel = () => resolve(undefined)
+            this.leftPanel.cancel = () => resolve(null)
         })
     }
     startSelectRangeDests(order: string,onRectRangeChange?: (p:[Point,Point]) => any,onParaRangeChange?: (p:[Point,Point,Point]) => any): Promise<Link[]|undefined>{

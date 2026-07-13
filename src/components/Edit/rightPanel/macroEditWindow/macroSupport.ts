@@ -5,8 +5,10 @@ export default class MacroSupport extends Narve.Component {
     supportMacroTexts = [
         "f{$n$}[$ct$]",
         "b<$comment$>[$ct$]",
-        "t|r,l||,h|{$ang$}[$ct$]",
-        "t|,h|{$ang$}[$ct$]",
+        "t|r,l|h{$ang$}[$ct$]",
+        "t|r,l|{$ang$}",
+        "t{$ang$}",
+        "th{$ang$}[$ct$]",
         "s<$comment$>{$n$}[$ct$]",
         "dc<$comment$>[$ct$]",
     ]
@@ -19,7 +21,7 @@ export default class MacroSupport extends Narve.Component {
         )
     }
     onEnter(insertText: string){
-        insertText
+        insertText // defined in project://src/components/Edit/rightPanel/macroEditWindow.ts
     }
 
     protected createSupport(supportMacroText: string){
@@ -58,6 +60,11 @@ export default class MacroSupport extends Narve.Component {
         const okBtn = nr("button",{},"✅")
         okBtn.elem.onclick = () => {
             this.onEnter(getTexts.map(f => f()).join(""))
+            support.children.forEach(child => {
+                if(child.elem instanceof HTMLInputElement){
+                    child.elem.value = ""
+                }
+            })
         }
         support.children.push(okBtn)
         return support

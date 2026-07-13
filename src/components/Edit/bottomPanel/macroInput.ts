@@ -8,7 +8,9 @@ export default class MacroInput extends Narve.Component {
         this.children.set(this.macroInput)
     }
     insertText(text: string){
-        this.macroInput.elem.value = this.macroInput.elem.value + text
+        const v = this.macroInput.elem.value
+        const space = v.length > 0 && v[v.length-1] !== " "?" ":""
+        this.macroInput.elem.value = this.macroInput.elem.value + space + text
     }
     startInputMacro(defaultVal: string): Promise<string>{
         this.macroInput.elem.value = defaultVal

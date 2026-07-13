@@ -27,6 +27,8 @@ createPamphletのswitch文に追加
 export type action = {
     move: act_move
     count: MathExp.ExpressionTree
+    isHiddenInPamph: boolean
+    isHiddenInAnimation: boolean
 }
 export type act_move = move_break|move_idle|move_liner|move_back|move_rotate|move_absRotate|move_revolve|move_slide|/*move_genRevolve|*/move_dyclon|move_sit|move_stand|move_dance|move_dance_slide|move_wave
 export type move_break = {
@@ -123,6 +125,7 @@ export default class Macro {
     }
     totalCount(variables: { [key: string]: number }): number{
         return this.actions.reduce((acc,cur) => {
+            if(cur.isHiddenInAnimation) return acc
             return acc+cur.count.evaluate(variables,true)
         },0)
     }
@@ -147,7 +150,7 @@ const _danceReg = new RegExp(`dc(?:<(${textReg.source})>)?`)
 const _danceSlideReg = new RegExp(`dcs(?:<(${textReg.source})>)?\{(${MathReg.source})\}`)
 const _waveReg = new RegExp(`wv(?:<(${textReg.source})>)?`)
 
-const startReg = /(?<=^|[^a-zA-Z])/ // マクロの開始を判定するために使う(dcs...はs...を含んでしまう問題の解消)
+const startReg = /(?<=^|[^a-zA-Z])([\^\*]?)/ // マクロの開始を判定するために使う(dcs...はs...を含んでしまう問題の解消)
 
 const linerReg        = new RegExp(startReg.source + _linerReg.source + countReg.source,"g")
 const backReg         = new RegExp(startReg.source + _backReg.source + countReg.source,"g")
@@ -223,10 +226,10 @@ function text2Actions(text: string):action[]{
                 action = matchToDyclon(match)
                 break
             case "sit":
-                action = matchToSit()
+                action = matchToSit(match)
                 break
             case "stand":
-                action = matchToStand()
+                action = matchToStand(match)
                 break
             case "dance":
                 action = matchToDance(match)
@@ -245,32 +248,36 @@ function text2Actions(text: string):action[]{
 }
 
 function matchToBreak(match: RegExpExecArray): action|null{
-    if(match[2] === undefined) return null
-    if(match[1] === undefined) match[1] = ""
+    if(match[3] === undefined) return null
+    if(match[2] === undefined) match[2] = ""
     try{
-        const count = new MathExp.ExpressionTree(match[2])
+        const count = new MathExp.ExpressionTree(match[3])
         return {
             move: {
                 type: "break",
-                text: match[1]
+                text: match[2]
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null
     }
 }
 function matchToIdle(match: RegExpExecArray): action|null{
-    if(match[2] === undefined) return null
-    if(match[1] === undefined) match[1] = ""
+    if(match[3] === undefined) return null
+    if(match[2] === undefined) match[2] = ""
     try{
-        const count = new MathExp.ExpressionTree(match[2])
+        const count = new MathExp.ExpressionTree(match[3])
         return {
             move: {
                 type: "idle",
-                text: match[1]
+                text: match[2]
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null
@@ -278,120 +285,132 @@ function matchToIdle(match: RegExpExecArray): action|null{
 }
 
 function matchToLiner(match: RegExpExecArray): action|null{
-    if(match[2] === undefined) return null
-    if(match[1] === undefined) match[1] = "3"
+    if(match[3] === undefined) return null
+    if(match[2] === undefined) match[2] = "3"
     try {
-        const countPerCell = new MathExp.ExpressionTree(match[1])
-        const count = new MathExp.ExpressionTree(match[2])
+        const countPerCell = new MathExp.ExpressionTree(match[2])
+        const count = new MathExp.ExpressionTree(match[3])
         
         return {
             move: {
                 type: "liner",
                 dcell: new MathExp.ExpressionTree(`(${count.source})/(${countPerCell.source})`)
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null
     }
 }
 function matchToBack(match: RegExpExecArray): action|null{
-    if(match[2] === undefined) return null
-    if(match[1] === undefined) match[1] = "3"
+    if(match[3] === undefined) return null
+    if(match[2] === undefined) match[2] = "3"
     try {
-        const countPerCell = new MathExp.ExpressionTree(match[1])
-        const count = new MathExp.ExpressionTree(match[2])
+        const countPerCell = new MathExp.ExpressionTree(match[2])
+        const count = new MathExp.ExpressionTree(match[3])
         
         return {
             move: {
                 type: "back",
                 dcell: new MathExp.ExpressionTree(`(${count.source})/(${countPerCell.source})`)
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null
     }
 }
 function matchToRotate(match: RegExpExecArray): action|null{
-    if(match[1] === undefined || match[2] === undefined) return null
+    if(match[2] === undefined || match[3] === undefined) return null
     let count = new MathExp.ExpressionTree("0")
-    if(match[3] !== undefined){
-        count = new MathExp.ExpressionTree(match[3])
+    if(match[4] !== undefined){
+        count = new MathExp.ExpressionTree(match[4])
     }
     try{
-        const rotateAngle = new MathExp.ExpressionTree(`${match[1]==="r"?"(0-1)":"1"}*(${match[2]})`)
+        const rotateAngle = new MathExp.ExpressionTree(`${match[2]==="r"?"(0-1)":"1"}*(${match[3]})`)
         return {
             move: {
                 type: "rotate",
                 rotateAngle: rotateAngle
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null
     }
 }
 function matchToAbsRotate(match: RegExpExecArray): action|null{
-    if(match[1] === undefined) return null
+    if(match[2] === undefined) return null
     let count = new MathExp.ExpressionTree("0")
-    if(match[2] !== undefined){
-        count = new MathExp.ExpressionTree(match[2])
+    if(match[3] !== undefined){
+        count = new MathExp.ExpressionTree(match[3])
     }
     try{
-        const rotateAngle = new MathExp.ExpressionTree(`${match[1]}`)
+        const rotateAngle = new MathExp.ExpressionTree(`${match[2]}`)
         return {
             move: {
                 type: "absRotate",
                 rotateAngle: rotateAngle
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null
     }
 }
 function matchToRevolve(match: RegExpExecArray): action|null{
-    if(match[1] === undefined || match[2] === undefined || match[3] === undefined) return null
+    if(match[2] === undefined || match[3] === undefined || match[4] === undefined) return null
 
     try{
-        const revolveAngle = new MathExp.ExpressionTree(`${match[1]==="r"?"(0-1)":"1"}*(${match[2]})`)
-        const count = new MathExp.ExpressionTree(match[3])
+        const revolveAngle = new MathExp.ExpressionTree(`${match[2]==="r"?"(0-1)":"1"}*(${match[3]})`)
+        const count = new MathExp.ExpressionTree(match[4])
         return {
             move: {
                 type: "revolve",
                 revolveAngle: revolveAngle,
                 center: massCanvasDef.centerPx
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null
     }
 }
 function matchToSlide(match: RegExpExecArray): action|null{
-    if(match[2] === undefined || match[3] === undefined) return null
-    if(match[1] === undefined) match[1] = ""
+    if(match[3] === undefined || match[4] === undefined) return null
+    if(match[2] === undefined) match[2] = ""
     try{
-        // match[1]はインデックスではなくスライド番号(1-based)
-        const slideIndex = new MathExp.ExpressionTree(match[2] + "-1")
-        const count = new MathExp.ExpressionTree(match[3])
+        // match[2]はインデックスではなくスライド番号(1-based)
+        const slideIndex = new MathExp.ExpressionTree(match[3] + "-1")
+        const count = new MathExp.ExpressionTree(match[4])
         return {
             move: {
                 type: "slide",
                 slideIndex : slideIndex,
-                text: match[1]
+                text: match[2]
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null
     }
 }
 function matchToDyclon(match: RegExpExecArray): action|null{
-    if(match[1] === undefined || match[2] === undefined) return null
-    const revolveAngle = new MathExp.ExpressionTree(match[1])
-    const count = new MathExp.ExpressionTree(match[2])
+    if(match[2] === undefined || match[3] === undefined) return null
+    const revolveAngle = new MathExp.ExpressionTree(match[2])
+    const count = new MathExp.ExpressionTree(match[3])
     return {
         move: {
             type: "dyclon",
@@ -399,74 +418,86 @@ function matchToDyclon(match: RegExpExecArray): action|null{
             center: massCanvasDef.centerPx,
             lastRaius: new MathExp.ExpressionTree(massCanvasDef.dyclonLastR.toString())
         },
-        count: count
+        count: count,
+        isHiddenInPamph: match[1] === "*",
+        isHiddenInAnimation: match[1] === "^"
     }
 }
 // MEMOカウントをいくつに指定しようが問答無用でカウントは1
-function matchToSit(): action|null{      
+function matchToSit(match: RegExpExecArray): action|null{      
     return {
         move: {
             type: "sit"
         },
-        count: new MathExp.ExpressionTree("1")
+        count: new MathExp.ExpressionTree("1"),
+        isHiddenInPamph: match[1] === "*",
+        isHiddenInAnimation: match[1] === "^"
     }
 }
 // MEMOカウントをいくつに指定しようが問答無用でカウントは1
-function matchToStand(): action|null{
+function matchToStand(match: RegExpExecArray): action|null{
     return {
         move: {
             type: "stand"
         },
-        count: new MathExp.ExpressionTree("1")
+        count: new MathExp.ExpressionTree("1"),
+        isHiddenInPamph: match[1] === "*",
+        isHiddenInAnimation: match[1] === "^"
     }
 }
 function matchToDance(match: RegExpExecArray): action|null{
-    if(match[2] === undefined) return null
-    if(match[1] === undefined) match[1] = ""
+    if(match[3] === undefined) return null
+    if(match[2] === undefined) match[2] = ""
     try{
-        const count = new MathExp.ExpressionTree(match[2])
+        const count = new MathExp.ExpressionTree(match[3])
         return {
             move: {
                 type: "dance",
-                text: match[1]
+                text: match[2]
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null
     }
 }
 function matchToDanceSlide(match: RegExpExecArray): action|null{
-    if(match[2] === undefined || match[3] === undefined) return null
-    if(match[1] === undefined) match[1] = ""
+    if(match[3] === undefined || match[4] === undefined) return null
+    if(match[2] === undefined) match[2] = ""
     
     try{
-        // match[1]はインデックスではなくスライド番号(1-based)
-        const slideIndex = new MathExp.ExpressionTree(match[2] + "-1")
-        const count = new MathExp.ExpressionTree(match[3])
+        // match[2]はインデックスではなくスライド番号(1-based)
+        const slideIndex = new MathExp.ExpressionTree(match[3] + "-1")
+        const count = new MathExp.ExpressionTree(match[4])
         return {
             move: {
                 type: "danceSlide",
                 slideIndex : slideIndex,
-                text: match[1]
+                text: match[2]
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null
     }
 }
 function matchToWave(match: RegExpExecArray): action|null{
-    if(match[2] === undefined) return null
-    if(match[1] === undefined) match[1] = ""
+    if(match[3] === undefined) return null
+    if(match[2] === undefined) match[2] = ""
     try{
-        const count = new MathExp.ExpressionTree(match[2])
+        const count = new MathExp.ExpressionTree(match[3])
         return {
             move: {
                 type: "wave",
-                text: match[1]
+                text: match[2]
             },
-            count: count
+            count: count,
+            isHiddenInPamph: match[1] === "*",
+            isHiddenInAnimation: match[1] === "^"
         }
     }catch{
         return null

@@ -4,7 +4,8 @@ import { openDlg_open_music, openDlg_read_msvi, openDlg_write_msvi } from "./fil
 import { saveDataToScenes, scenesToSaveData } from "./CreateSaveData"
 import { createPamphlet, PamphMode } from "../components/pamphlet/createPamphlet"
 import PlayConditions from "./playConditions"
-import { message } from "@tauri-apps/plugin-dialog"
+import { confirm, message } from "@tauri-apps/plugin-dialog"
+import { compressScene, depressScene } from "./sceneCompresser"
 
 
 let personSelectSettingVal:("rect"|"parallel"|"hold") = "rect"
@@ -113,6 +114,18 @@ export default async function createMenu(app: App){
                 text: "このシーンを削除",
                 accelerator: "Ctrl+Shift+D",
                 action: () => menuFunctions.removeScene(app)
+            },
+            {
+                id: "copyScene",
+                text: "このシーンをコピー",
+                accelerator: "Ctrl+Shift+C",
+                action: () => menuFunctions.copyScene(app)
+            },
+            {
+                id: "pasteScene",
+                text: "このシーンにペースト",
+                accelerator: "Ctrl+Shift+V",
+                action: () => menuFunctions.pasteScene(app)
             },
         ]
     })
@@ -254,8 +267,8 @@ export default async function createMenu(app: App){
         items: [justSeg,segPlus1]
     })
 
-    // 印刷モード設定
-    // FROM
+    // TODO 印刷モード設定
+
 
 
     const menu = await Menu.new({
@@ -384,6 +397,35 @@ export namespace menuFunctions {
     }
     export const removeScene = (app: App) => {
         app.removeScene()
+    }
+    export const copyScene = (app: App) => {
+        navigator.clipboard.writeText(compressScene(app.edit.scene))
+            .catch(err => {
+              message("コピーに失敗しました。")
+              console.log("copy faild",err)
+            })
+
+        
+    }
+    export const pasteScene = (app: App) => {
+        navigator.clipboard.readText()
+            .then(async text => {
+                const ok = await confirm("このシーンの内容は削除されます。")
+                if(!ok) return
+
+                const scene = depressScene(text)
+                if(scene !== null){
+                    app.scenes[app.currentSceneIdx] = scene
+                    app.setScene(app.currentSceneIdx)
+                }else{
+                    await message("コピーされたシーンがありません。")
+                }
+            })
+            .catch(err => {
+                message("ペーストに失敗しました。権限が与えられていない可能性があります。")
+                console.log("paste faild",err)
+            })
+        
     }
     // playMenuに関しては処理が単純すぎるのでショートカット側で直接書く
     

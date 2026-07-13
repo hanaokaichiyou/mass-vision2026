@@ -86,7 +86,7 @@ export default class Player {
                 await new Promise(resolve => setTimeout(resolve,1000*startCounts.massStartCount/defaultFps*fpc))
                 if(killFlag) return resolve()
             }else{// 最初のシーンでないなら再生しない(将来的には再生開始位置調整したい)
-                // TODO 音楽の再生開始位置調整
+                // TODO 音楽の再生開始位置調整して途中からのシーンでも再生できるように
             }
 
             const start = Date.now()
@@ -109,7 +109,7 @@ export default class Player {
                 if(frame === undefined) return
                 
                 frame.statePersonPairs.forEach(({state,person,isLarge}) => {
-                    this.personsCanvas.plot(state,person.colorIndex,undefined,isLarge)
+                    this.personsCanvas.plot(state,person.colorIndex,person.id,isLarge)
                     person.state = state.clone()
                 })
                 if(f%fpc === 0){

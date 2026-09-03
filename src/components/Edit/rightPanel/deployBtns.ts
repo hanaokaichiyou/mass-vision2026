@@ -41,6 +41,7 @@ export default class DeployBtns extends Narve.Component {
         this.onDisplay()
     }
     onDisplay(){
+        this.windows.switchFocus(this.rootMenu)
         setNumKeyOperations([
             undefined,
             this.pointBtn,

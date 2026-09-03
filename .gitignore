@@ -29,3 +29,4 @@ mathExpEdit.md
 samples
 src-tauri/icons/app-icon.png
 *.old.*
+*.pdf

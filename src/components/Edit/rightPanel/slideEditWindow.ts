@@ -90,5 +90,6 @@ export default class SlideEditWindow extends Narve.Component {
         this.onDisplay()
     }
     onDisplay(){
+        this.windows.switchFocus(this.rootMenu)
     }
 }

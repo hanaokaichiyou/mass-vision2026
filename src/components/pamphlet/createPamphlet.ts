@@ -9,9 +9,16 @@ import { createFramesFromAction } from "../../global/CreateFramesFromMacro";
 import PointDiff from "../../global/PointDiff";
 import Point from "../../global/Point";
 import { massCanvasDef } from "../../global/massCanvasDef";
+import { DetailPageMode } from "../PrintPopup";
 
-export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: PamphMode){
+export function createPamphlet(scenes: Scene[],colorFills: boolean[],mode: PamphMode,traceON: boolean = true, traceDot: boolean = false, detailPageON: DetailPageMode = "allSlide"){
     const personalPamphlets: Narve.Component[] = []
+    
+    // TODO これらを反映する
+    traceON
+    traceDot
+    detailPageON
+
     scenes.forEach((scene,sceneIndex) => {
         scene.persons.forEach((person) => {
             const tmpCanvas = new TmpCanvas()
@@ -233,7 +240,9 @@ function getLastAction(scene: Scene,id: number){
 }
 
 export type PamphMode = "MoonFlag"|"MoonFemale"|"SunShield"|"SunFemale"
-
+export const isPamphMode = (value: any): value is PamphMode => {
+    return ["MoonFlag","MoonFemale","SunShield","SunFemale"].includes(value)
+}
 const upperTextY = 15
 const underTextY = 185
 class Pamph_FrontWalk_Cnvs extends Narve.Component<HTMLCanvasElement> {

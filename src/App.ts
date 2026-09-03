@@ -34,6 +34,8 @@ export default class App extends Narve.Component {
     pages = nr("div",{class: "pages"})
 
     segPlus1 = true
+
+    // FROM appにprintpopuo追加
     constructor(){
         super("div",{class: "app"})
         this.children.set(this.pages,this.musicPlayer)
@@ -371,6 +373,7 @@ export default class App extends Narve.Component {
         this.edit.editField.uiCanvas.clearAll()
         const zoomable = this.edit.editField.zoomCanvas.zoomable
         this.edit.editField.zoomCanvas.unZoomable()
+        this.edit.rightPanel.goHome()
         
         if(isAutoPlay){
             console.log("autoPlay")

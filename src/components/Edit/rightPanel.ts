@@ -71,12 +71,8 @@ export default class RightPanel extends Narve.Component {
         this.varsSettings.elem.oncontextmenu = (e) => {
             e.stopPropagation()
             e.preventDefault()
-            this.cancelAll()
-            this.parent.leftPanel.clear()
-            
-            this.windows.switchFocus(this.rootMenu)
-            this.setTitle("ホーム")
-            this.helpArea.helps.switchFocus(this.helpArea.homeHelp)
+
+            this.goHome()
             
             parent.drawFirstFrame()
         }
@@ -134,6 +130,7 @@ export default class RightPanel extends Narve.Component {
             this.parent.leftPanel.clear()
             this.windows.switchFocus(this.varsSettings)
             this.setTitle("変数設定")
+            this.helpArea.helps.switchFocus(this.helpArea.varsSettingsHelp)
         }
         this.rootMenu.pamphSettingBtn.elem.onclick = () => {
             this.parent.leftPanel.clear()
@@ -153,6 +150,14 @@ export default class RightPanel extends Narve.Component {
     }
     setTitle(title: string){
         this.titleElem.setInnerText(title)
+    }
+    goHome(){
+        this.cancelAll()
+        this.parent.leftPanel.clear()
+        
+        this.windows.switchFocus(this.rootMenu)
+        this.setTitle("ホーム")
+        this.helpArea.helps.switchFocus(this.helpArea.homeHelp)
     }
     async cancelAll(){
         // define in project://src/components/Edit.ts

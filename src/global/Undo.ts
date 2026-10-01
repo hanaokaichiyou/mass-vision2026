@@ -4,8 +4,8 @@ export type UndoFunc = {
 }
 // MEMO シーンインデックスも保存してシーンに飛ぶようにする？
 export default class Undo {
-    stack: UndoFunc[] = []
-    curIndex = 0
+    protected stack: UndoFunc[] = []
+    protected curIndex = 0
     constructor(){
 
     }
